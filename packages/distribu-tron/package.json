@@ -1,0 +1,32 @@
+{
+  "name": "distribu-tron",
+  "version": "0.0.0",
+  "description": "Fast, weighted, plot-ready distribution statistics from a frequency table.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "files": ["dist"],
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
+  },
+  "types": "./dist/index.d.ts",
+  "module": "./dist/index.js",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "bench": "vitest bench --run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "d3-array": "^3.2.4",
+    "simple-statistics": "^7.8.9",
+    "tinybench": "^3.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.0"
+  }
+}
