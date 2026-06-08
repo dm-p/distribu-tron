@@ -91,6 +91,11 @@ import {
 - **Shape & density** - `ecdf`/`cdf`, a capped Freedman–Diaconis `histogram` (weights conserved;
   explicit `edges` supported), and a windowed Epanechnikov `kde` with Silverman bandwidth.
 
+> **Quantiles treat weights as frequencies** - `Σweight` is the effective sample size (type-7). Probability /
+> importance weights that sum to ≈1 collapse every quantile to the smallest value; scale them to count
+> magnitude first (e.g. `× 1000`), or use the scale-invariant `percentileRank` / `cdf`. (`histogram`, `kde`,
+> `ecdf`, and `mad` are already scale-invariant.)
+
 ### Grouping with ROLLUP
 
 `group()` turns a row set into one `Distribution` per key, with optional hierarchical subtotals

@@ -69,6 +69,23 @@ describe("quantile (linear default reduces to type-7 for unit weights)", () => {
     expect(() => quantile(d, -0.1)).toThrow(RangeError);
     expect(() => quantile(d, NaN)).toThrow(RangeError);
   });
+  it("treats weights as frequencies: probability weights (Σw≈1) are degenerate; scaling fixes it", () => {
+    // type-7 rank p*(n-1): with n=1 it is ~0 for every p, so the quantile collapses to the smallest value.
+    const probs = distribution([
+      { value: 1, weight: 0.3 },
+      { value: 5, weight: 0.7 },
+    ]);
+    expect(quantile(probs, 0.75)).toBe(1); // degenerate — documented frequency-model consequence
+    // Scaling the weights to count magnitude (×10) makes Σw=10 and type-7 returns the expected 5.
+    const counts = distribution([
+      { value: 1, weight: 3 },
+      { value: 5, weight: 7 },
+    ]);
+    expect(quantile(counts, 0.75)).toBe(5);
+    // percentileRank is scale-invariant — it gives the same answer for either weighting.
+    expect(percentileRank(probs, 1)).toBeCloseTo(0.3, 12);
+    expect(percentileRank(counts, 1)).toBeCloseTo(0.3, 12);
+  });
 });
 
 describe("percentileRank", () => {

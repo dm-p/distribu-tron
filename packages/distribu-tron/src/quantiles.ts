@@ -20,6 +20,14 @@ function valueAtRank(d: Distribution, r: number): number {
  * Weighted quantile at probability `p ∈ [0,1]`. Reduces to the standard type-7 quantile for unit
  * weights. `method` defaults to `"linear"` (interpolate between order statistics); `"lower"`/`"higher"`/
  * `"nearest"` (round half away from zero)/`"midpoint"` select discrete order statistics instead.
+ *
+ * **Weights are frequencies.** Type-7 is a finite-sample estimator, so the total weight `n` (Σ weight)
+ * acts as the effective sample size that the rank `p · (n − 1)` interpolates over. This is exact for
+ * count weights (a frequency table) and any weights whose sum is ≫ 1. **Probability/importance weights
+ * that sum to ≈ 1 are degenerate**: `n − 1 ≈ 0`, so every quantile collapses to the smallest value.
+ * Scale such weights to a count-like magnitude before calling (e.g. `weight × 1000`), or use the
+ * scale-invariant {@link percentileRank} / {@link cdf} (and `mad`'s step-median), which normalize by `n`.
+ *
  * @throws {RangeError} if `p` is outside `[0,1]`.
  * @returns `NaN` for an empty or zero-mass distribution.
  */
