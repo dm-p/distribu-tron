@@ -76,6 +76,9 @@ describe("distribution", () => {
   it("profile attaches prep timings when asked", () => {
     const d = distribution([3, 1, 2], { profile: true });
     expect(d.timings?.totalMs).toBeGreaterThanOrEqual(0);
+    // aggregate and sort are reported separately (not folded), both finite and non-negative
+    expect(d.timings?.aggregateMs).toBeGreaterThanOrEqual(0);
+    expect(d.timings?.sortMs).toBeGreaterThanOrEqual(0);
     expect(distribution([1]).timings).toBeUndefined();
   });
 });

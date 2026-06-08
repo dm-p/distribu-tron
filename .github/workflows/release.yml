@@ -12,6 +12,10 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, registry-url: "https://registry.npmjs.org", cache: pnpm }
       - run: pnpm install --frozen-lockfile
+      # Gate the publish on the same checks as CI so a tag on a broken commit can't ship.
+      - run: pnpm -C packages/distribu-tron lint
+      - run: pnpm -C packages/distribu-tron typecheck
+      - run: pnpm -C packages/distribu-tron test
       - run: pnpm -C packages/distribu-tron build
       - run: pnpm -C packages/distribu-tron publish --no-git-checks --provenance --access public
         env: { NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}" }

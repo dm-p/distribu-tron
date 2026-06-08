@@ -8,7 +8,7 @@ export function boxplot(d: Distribution, opts: { whisker?: number } = {}): Boxpl
   const upperFence = q3 + k * iqr;
   const outliers: number[] = [];
   for (let i = 0; i < d.size; i++) {
-    if (d.weights[i] === 0) continue; // zero-weight values carry no mass — not observations
+    if (d.weights[i]! === 0) continue; // zero-weight values carry no mass — not observations
     const v = d.values[i]!;
     if (v < lowerFence || v > upperFence) outliers.push(v);
   }

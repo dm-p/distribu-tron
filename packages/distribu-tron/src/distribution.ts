@@ -61,19 +61,26 @@ export function distribution(input: DistributionInput, options: DistributionOpti
   const t1 = options.profile ? performance.now() : 0;
 
   let values: Float64Array, weights: Float64Array;
+  let aggregateMs = 0;
+  let sortMs = 0;
   if (options.sorted) {
-    // Caller guarantees ascending & distinct: no aggregate, no sort.
+    // Caller guarantees ascending & distinct: no aggregate, no sort (both phases stay 0).
     values = Float64Array.from(rawV);
     weights = Float64Array.from(rawW);
   } else {
-    // Aggregate duplicates into a map, then sort the distinct keys.
+    // Aggregate duplicates into a map...
     const merged = new Map<number, number>();
     for (let i = 0; i < rawV.length; i++) merged.set(rawV[i]!, (merged.get(rawV[i]!) ?? 0) + rawW[i]!);
+    const tAgg = options.profile ? performance.now() : 0;
+    // ...then sort the distinct keys and materialize the substrate.
     const keys = Array.from(merged.keys()).sort((a, b) => a - b);
     values = Float64Array.from(keys);
     weights = Float64Array.from(keys, (k) => merged.get(k)!);
+    if (options.profile) {
+      aggregateMs = tAgg - t1;
+      sortMs = performance.now() - tAgg;
+    }
   }
-  const t2 = options.profile ? performance.now() : 0;
 
   const size = values.length;
   const cumulative = new Float64Array(size);
@@ -84,7 +91,7 @@ export function distribution(input: DistributionInput, options: DistributionOpti
   }
 
   const timings: PrepTimings | undefined = options.profile
-    ? { validateMs: t1 - t0, aggregateMs: 0, sortMs: t2 - t1, totalMs: performance.now() - t0 }
+    ? { validateMs: t1 - t0, aggregateMs, sortMs, totalMs: performance.now() - t0 }
     : undefined;
 
   return {

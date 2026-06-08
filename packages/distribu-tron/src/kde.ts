@@ -42,15 +42,19 @@ function buildSamplePoints(min: number, max: number, resolution: number, clamp: 
     // Anchor the grid ends to exactly [min, max].
     if (sample[0]! > min) sample.unshift(min);
     if (sample[sample.length - 1]! < max) sample.push(max);
-  } else if (step > 0) {
-    // Pad buffer steps onto each end so the kernel can taper to zero beyond the data range.
-    const buffer = Math.floor(resolution / 2);
-    for (let i = 0; i < buffer; i++) {
-      sample.unshift(sample[0]! - step);
-      sample.push(sample[sample.length - 1]! + step);
-    }
+    return sample;
   }
-  return sample;
+  if (!(step > 0)) return sample;
+  // Pad `buffer` steps onto each end so the kernel can taper to zero beyond the data range.
+  // Built in one O(n) pass — a repeated unshift() would be O(n²) for large resolutions.
+  const buffer = Math.floor(resolution / 2);
+  const first = sample[0]!;
+  const last = sample[sample.length - 1]!;
+  const out: number[] = [];
+  for (let i = buffer; i >= 1; i--) out.push(first - i * step);
+  for (const x of sample) out.push(x);
+  for (let i = 1; i <= buffer; i++) out.push(last + i * step);
+  return out;
 }
 
 function density(d: Distribution, x: number, h: number): number {
