@@ -7,8 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with: { version: 9 }
+      - uses: pnpm/action-setup@v4 # version comes from root package.json "packageManager"
       - uses: actions/setup-node@v4
         with: { node-version: 22, registry-url: "https://registry.npmjs.org", cache: pnpm }
       - run: pnpm install --frozen-lockfile
@@ -17,5 +16,11 @@ jobs:
       - run: pnpm -C packages/distribu-tron typecheck
       - run: pnpm -C packages/distribu-tron test
       - run: pnpm -C packages/distribu-tron build
-      - run: pnpm -C packages/distribu-tron publish --no-git-checks --provenance --access public
+      # Prerelease versions (e.g. 0.1.0-beta.0) publish under their label tag (beta); stable → latest.
+      - id: disttag
+        run: |
+          VERSION=$(node -p "require('./packages/distribu-tron/package.json').version")
+          if [[ "$VERSION" == *-* ]]; then TAG="${VERSION#*-}"; TAG="${TAG%%.*}"; else TAG="latest"; fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - run: pnpm -C packages/distribu-tron publish --no-git-checks --provenance --access public --tag ${{ steps.disttag.outputs.tag }}
         env: { NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}" }

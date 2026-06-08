@@ -107,3 +107,25 @@ makes everything else fall into place:
 - Source files need **no license banner** (MIT OSS package) — except `internal/ticks.ts`, which keeps its
   ISC attribution.
 - Commits use **conventional-commit** format. Commit/publish only when asked.
+
+## Releasing (npm publish)
+
+Publishing is **tag-triggered**: pushing a `v*` tag runs `.github/workflows/release.yml`, which gates on
+lint → typecheck → test → build, then `pnpm publish` with provenance. The published **version is whatever
+is in `packages/distribu-tron/package.json`** — the tag only triggers the run, so keep the two in sync.
+
+The workflow derives the npm **dist-tag** from the version: a prerelease (`0.1.0-beta.0`) publishes under its
+label (`beta`); a stable version (`0.1.0`) publishes under `latest`. So `npm i distribu-tron@beta` pulls
+prereleases, while `npm i distribu-tron` only resolves once a stable version exists.
+
+To cut a release:
+
+1. Set the version in `packages/distribu-tron/package.json` (e.g. `0.1.0-beta.1`, or `0.1.0` for stable).
+2. Commit, merge to `main`, and confirm **CI is green on `main`** (a red tag = a failed publish).
+3. Tag and push: `git tag v0.1.0-beta.1 && git push origin v0.1.0-beta.1`.
+4. Verify: `npm view distribu-tron dist-tags`.
+
+One-time requirements: the GitHub repo must be **public** (provenance needs a public repo + the OIDC
+`id-token: write` the workflow already requests), and an Actions secret **`NPM_TOKEN`** must hold an npm
+**granular access token** with **read & write** (publish) permission for the package. pnpm is pinned via the
+root `packageManager` field so CI matches local.
