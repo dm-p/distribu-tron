@@ -11,9 +11,15 @@ describe("boxplot", () => {
     expect(b.min).toBe(1);
     expect(b.max).toBe(100);
     expect(b.median).toBe(6);
+    // whisker end is the highest in-fence value (10), distinct from max (100, an outlier)
+    expect(b.upperAdjacent).toBe(10);
+    expect(b.lowerAdjacent).toBe(1);
   });
   it("no outliers when tight", () => {
-    expect(boxplot(distribution([1, 2, 3, 4, 5])).outliers).toEqual([]);
+    const b = boxplot(distribution([1, 2, 3, 4, 5]));
+    expect(b.outliers).toEqual([]);
+    expect(b.lowerAdjacent).toBe(1);
+    expect(b.upperAdjacent).toBe(5); // == max when nothing is an outlier
   });
   it("zero-weight values are not reported as outliers (no mass)", () => {
     // value 100 carries zero weight, so it is not an observation and must not be an outlier

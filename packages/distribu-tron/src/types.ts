@@ -71,6 +71,10 @@ export interface BoxplotResult {
   iqr: number;
   lowerFence: number;
   upperFence: number;
+  /** Lowest value at or above `lowerFence` — the lower whisker end (NaN if empty). */
+  lowerAdjacent: number;
+  /** Highest value at or below `upperFence` — the upper whisker end (NaN if empty). */
+  upperAdjacent: number;
   outliers: number[];
 }
 

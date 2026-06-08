@@ -77,7 +77,6 @@ function rollupSubtotals(
   leafBuckets: Map<string, Bucket>,
   dimensions: string[],
   totalLabel: GroupKeyValue,
-  sorted?: boolean,
 ): DistributionGroup[] {
   const subtotals: DistributionGroup[] = [];
   for (let depth = dimensions.length - 1; depth >= 1; depth--) {
@@ -87,7 +86,9 @@ function rollupSubtotals(
       bucketPush(buckets, activeDims, rolledKey(dimensions, leaf.key, depth, totalLabel), leaf.pairs);
     }
     for (const b of buckets.values()) {
-      subtotals.push({ key: b.key, level: activeDims, depth, distribution: distribution(b.pairs, { sorted }) });
+      // A subtotal merges pairs from several leaves (group-insertion order, not value order), so it must
+      // always sort/aggregate — never trust spec.sorted here.
+      subtotals.push({ key: b.key, level: activeDims, depth, distribution: distribution(b.pairs) });
     }
   }
   return subtotals;
@@ -107,20 +108,22 @@ export function group(rows: ReadonlyArray<Record<string, unknown>>, spec: GroupS
   const getWeight = spec.weight ? acc<number>(spec.weight) : () => 1;
 
   const { leafBuckets, allPairs } = bucketLeaves(rows, dimensions, getValue, getWeight);
+  // `spec.sorted` only applies per-leaf (a single group's rows may arrive value-sorted). `allPairs` and
+  // rollup buckets concatenate across groups, so they are never globally sorted — those always re-sort.
   const leaves: DistributionGroup[] = Array.from(leafBuckets.values(), (b) => ({
     key: b.key,
     level: [...dimensions],
     depth: dimensions.length,
     distribution: distribution(b.pairs, { sorted }),
   }));
-  const overall = distribution(allPairs, { sorted });
+  const overall = distribution(allPairs);
 
   if (!spec.rollup) return { dimensions, groups: leaves, leaves, overall };
 
   const grandKey: Record<string, GroupKeyValue> = {};
   for (const dim of dimensions) grandKey[dim] = totalLabel;
   const grand: DistributionGroup = { key: grandKey, level: [], depth: 0, distribution: overall };
-  const groups = [...leaves, ...rollupSubtotals(leafBuckets, dimensions, totalLabel, sorted), grand];
+  const groups = [...leaves, ...rollupSubtotals(leafBuckets, dimensions, totalLabel), grand];
   return { dimensions, groups, leaves, overall };
 }
 

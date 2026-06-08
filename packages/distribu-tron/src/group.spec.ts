@@ -58,4 +58,29 @@ describe("group", () => {
     expect(gd.groups.filter((g) => g.depth === 0).length).toBe(1);
     expect(gd.groups.filter((g) => g.depth === 1).length).toBe(2);
   });
+  it("sorted:true does not corrupt overall or rollup subtotals (cross-group concatenation)", () => {
+    // each leaf's rows arrive value-ascending (so sorted:true is valid per-leaf), but across groups the
+    // values interleave — overall and subtotals concatenate them and must still sort/aggregate.
+    const interleaved = [
+      { cat: "A", sub: "x", value: 10, weight: 1 },
+      { cat: "A", sub: "x", value: 50, weight: 1 }, // leaf (A,x): [10, 50]
+      { cat: "A", sub: "y", value: 30, weight: 1 }, // leaf (A,y): [30]
+      { cat: "B", sub: "x", value: 20, weight: 1 }, // leaf (B,x): [20]
+    ];
+    const gd = group(interleaved, {
+      by: ["cat", "sub"],
+      value: "value",
+      weight: "weight",
+      rollup: true,
+      totalLabel: "(All)",
+      sorted: true,
+    });
+    // subtotal A merges (A,x)=[10,50] + (A,y)=[30] → concatenation [10,50,30]; must come out sorted
+    const subA = gd.groups.find((g) => g.depth === 1 && g.key.cat === "A")!;
+    expect(Array.from(subA.distribution.values)).toEqual([10, 30, 50]);
+    expect(Array.from(subA.distribution.cumulative)).toEqual([1, 2, 3]);
+    // overall across all rows must also be sorted, not left in row order
+    expect(Array.from(gd.overall.values)).toEqual([10, 20, 30, 50]);
+    expect(gd.overall.n).toBe(4);
+  });
 });
