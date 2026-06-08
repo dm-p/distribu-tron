@@ -12,6 +12,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
+      - run: pnpm -C packages/distribu-tron lint
       - run: pnpm -C packages/distribu-tron typecheck
       - run: pnpm -C packages/distribu-tron test
       - run: pnpm -C packages/distribu-tron build

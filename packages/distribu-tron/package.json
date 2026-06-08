@@ -5,22 +5,31 @@
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
   },
   "types": "./dist/index.d.ts",
   "module": "./dist/index.js",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
+    "lint": "biome check .",
+    "format": "biome check --write .",
     "bench": "vitest bench --run"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
     "@types/d3-array": "^3.2.0",
     "@types/node": "^22.0.0",
     "d3-array": "^3.2.4",

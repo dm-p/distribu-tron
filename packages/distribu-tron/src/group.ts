@@ -1,6 +1,17 @@
 import type {
-  Accessor, Bin, Distribution, DistributionGroup, GroupSpec, GroupedDistribution, GroupKeyValue,
-  HistogramOptions, KdeOptions, KdePoint, LevelSelect, SummaryStatistics, WeightedValue,
+  Accessor,
+  Bin,
+  Distribution,
+  DistributionGroup,
+  GroupSpec,
+  GroupedDistribution,
+  GroupKeyValue,
+  HistogramOptions,
+  KdeOptions,
+  KdePoint,
+  LevelSelect,
+  SummaryStatistics,
+  WeightedValue,
 } from "./types";
 import { distribution } from "./distribution";
 import { histogram } from "./histogram";
@@ -15,10 +26,18 @@ function acc<T>(a: Accessor<T>): (row: Record<string, unknown>) => T {
 type Bucket = { key: Record<string, GroupKeyValue>; pairs: WeightedValue[] };
 
 /** Get-or-create the bucket whose id is `key` projected onto `idDims`, then append `pairs` to it. */
-function bucketPush(buckets: Map<string, Bucket>, idDims: string[], key: Record<string, GroupKeyValue>, pairs: WeightedValue[]): void {
+function bucketPush(
+  buckets: Map<string, Bucket>,
+  idDims: string[],
+  key: Record<string, GroupKeyValue>,
+  pairs: WeightedValue[],
+): void {
   const id = JSON.stringify(idDims.map((d) => key[d]));
   let bucket = buckets.get(id);
-  if (!bucket) { bucket = { key, pairs: [] }; buckets.set(id, bucket); }
+  if (!bucket) {
+    bucket = { key, pairs: [] };
+    buckets.set(id, bucket);
+  }
   for (const p of pairs) bucket.pairs.push(p);
 }
 
@@ -42,14 +61,24 @@ function bucketLeaves(
 }
 
 /** A leaf key with every dimension at index ≥ `depth` replaced by the rollup total label. */
-function rolledKey(dimensions: string[], leafKey: Record<string, GroupKeyValue>, depth: number, totalLabel: GroupKeyValue): Record<string, GroupKeyValue> {
+function rolledKey(
+  dimensions: string[],
+  leafKey: Record<string, GroupKeyValue>,
+  depth: number,
+  totalLabel: GroupKeyValue,
+): Record<string, GroupKeyValue> {
   const key: Record<string, GroupKeyValue> = {};
   for (let i = 0; i < dimensions.length; i++) key[dimensions[i]!] = i < depth ? leafKey[dimensions[i]!]! : totalLabel;
   return key;
 }
 
 /** Prefix-ROLLUP subtotals: for depth = dims-1 … 1, merge leaves that share their first `depth` dimensions. */
-function rollupSubtotals(leafBuckets: Map<string, Bucket>, dimensions: string[], totalLabel: GroupKeyValue, sorted?: boolean): DistributionGroup[] {
+function rollupSubtotals(
+  leafBuckets: Map<string, Bucket>,
+  dimensions: string[],
+  totalLabel: GroupKeyValue,
+  sorted?: boolean,
+): DistributionGroup[] {
   const subtotals: DistributionGroup[] = [];
   for (let depth = dimensions.length - 1; depth >= 1; depth--) {
     const activeDims = dimensions.slice(0, depth);
@@ -79,7 +108,10 @@ export function group(rows: ReadonlyArray<Record<string, unknown>>, spec: GroupS
 
   const { leafBuckets, allPairs } = bucketLeaves(rows, dimensions, getValue, getWeight);
   const leaves: DistributionGroup[] = Array.from(leafBuckets.values(), (b) => ({
-    key: b.key, level: [...dimensions], depth: dimensions.length, distribution: distribution(b.pairs, { sorted }),
+    key: b.key,
+    level: [...dimensions],
+    depth: dimensions.length,
+    distribution: distribution(b.pairs, { sorted }),
   }));
   const overall = distribution(allPairs, { sorted });
 
@@ -106,10 +138,11 @@ type Tagged<T> = T & Record<string, GroupKeyValue> & { depth: number };
 
 function selectGroups(gd: GroupedDistribution, sel: LevelSelect): DistributionGroup[] {
   const leafDepth = gd.dimensions.length;
-  return gd.groups.filter((g) =>
-    g.depth === leafDepth ||
-    (sel.includeSubtotals && g.depth > 0 && g.depth < leafDepth) ||
-    (sel.includeOverall && g.depth === 0),
+  return gd.groups.filter(
+    (g) =>
+      g.depth === leafDepth ||
+      (sel.includeSubtotals && g.depth > 0 && g.depth < leafDepth) ||
+      (sel.includeOverall && g.depth === 0),
   );
 }
 
@@ -117,7 +150,7 @@ function tag<T extends object>(g: DistributionGroup, row: T): Tagged<T> {
   // Fail fast on the reserved-field-name collision (see {@link Tagged}): a dimension named after an
   // output field would silently overwrite that statistic/bin value. Throw instead of corrupting.
   for (const k of Object.keys(g.key)) {
-    if (k === "depth" || Object.prototype.hasOwnProperty.call(row, k)) {
+    if (k === "depth" || Object.hasOwn(row, k)) {
       throw new RangeError(
         `grouping dimension "${k}" collides with a reserved output field ("depth" or a statistic/bin field); rename the dimension.`,
       );
@@ -149,10 +182,7 @@ export function summarize(
  * distribution (so series are directly comparable / stackable). Leaves only by default; opt into
  * subtotals/overall via {@link LevelSelect}. See {@link Tagged} for the reserved-field-name caveat.
  */
-export function groupedHistogram(
-  gd: GroupedDistribution,
-  opts: HistogramOptions & LevelSelect = {},
-): Tagged<Bin>[] {
+export function groupedHistogram(gd: GroupedDistribution, opts: HistogramOptions & LevelSelect = {}): Tagged<Bin>[] {
   // Shared edges from the overall rollup, reused for every selected group.
   const template = histogram(gd.overall, opts);
   const edges = edgesOf(template);
@@ -172,10 +202,7 @@ export function groupedHistogram(
  * distribution's `[min, max]`. Per-group curves are intentionally NOT clamped to each group's own
  * domain — they all share one x-axis, which is the point of a grouped KDE.
  */
-export function groupedKde(
-  gd: GroupedDistribution,
-  opts: KdeOptions & LevelSelect = {},
-): Tagged<KdePoint>[] {
+export function groupedKde(gd: GroupedDistribution, opts: KdeOptions & LevelSelect = {}): Tagged<KdePoint>[] {
   // Shared sample points + bandwidth from the overall rollup.
   const template = kde(gd.overall, opts);
   const samplePoints = template.map((p) => p.x);
