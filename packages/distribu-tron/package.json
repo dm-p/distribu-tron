@@ -21,6 +21,7 @@
     "bench": "vitest bench --run"
   },
   "devDependencies": {
+    "@types/d3-array": "^3.2.0",
     "@types/node": "^22.0.0",
     "d3-array": "^3.2.4",
     "simple-statistics": "^7.8.9",

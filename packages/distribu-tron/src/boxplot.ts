@@ -1,0 +1,15 @@
+import type { BoxplotResult, Distribution } from "./types";
+import { quartiles } from "./quantiles";
+
+export function boxplot(d: Distribution, opts: { whisker?: number } = {}): BoxplotResult {
+  const k = opts.whisker ?? 1.5;
+  const { q1, q2, q3, iqr } = quartiles(d);
+  const lowerFence = q1 - k * iqr;
+  const upperFence = q3 + k * iqr;
+  const outliers: number[] = [];
+  for (let i = 0; i < d.size; i++) {
+    const v = d.values[i]!;
+    if (v < lowerFence || v > upperFence) outliers.push(v);
+  }
+  return { min: d.min, q1, median: q2, q3, max: d.max, iqr, lowerFence, upperFence, outliers };
+}

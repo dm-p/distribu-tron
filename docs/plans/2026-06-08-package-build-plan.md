@@ -1213,8 +1213,13 @@ describe("kde", () => {
     const pts = kde(d, { bandwidth: 1.5, samplePoints: [2, 4] });
     expect(pts.map((p) => p.x)).toEqual([2, 4]);
   });
-  it("silverman picks the smaller estimate", () => {
+  it("silverman scales the IQR estimate by n^-1/5 when it is smaller", () => {
+    // iqr/1.349 = 1 < stdev 10 → 1.06 * 1 * n^-0.2
     expect(silvermanBandwidth(100, 1.349, 10)).toBeCloseTo(1.06 * Math.pow(100, -0.2), 10);
+  });
+  it("silverman scales the stdev estimate by n^-1/5 when it is smaller", () => {
+    // stdev 0.3 < iqr/1.349 (7.41) → 1.06 * 0.3 * n^-0.2  (regression guard: n^-0.2 must apply to stdev)
+    expect(silvermanBandwidth(100, 10, 0.3)).toBeCloseTo(1.06 * 0.3 * Math.pow(100, -0.2), 12);
   });
 });
 ```
@@ -1231,7 +1236,8 @@ const ZERO = 1e-8;
 const DEFAULT_RESOLUTION = 50;
 
 export function silvermanBandwidth(n: number, iqr: number, stdev: number): number {
-  return 1.06 * Math.min((iqr / 1.349) * Math.pow(n, -0.2), stdev);
+  // Robust Silverman rule of thumb: n^(-1/5) scales whichever spread estimate is smaller.
+  return 1.06 * Math.min(iqr / 1.349, stdev) * Math.pow(n, -0.2);
 }
 
 export function kde(d: Distribution, options: KdeOptions = {}): KdePoint[] {
@@ -1655,7 +1661,7 @@ function silvermanFor(d: Distribution): number {
   const mu = s / d.n;
   let ss = 0; for (let i = 0; i < d.size; i++) { const x = d.values[i]! - mu; ss += d.weights[i]! * x * x; }
   const sd = Math.sqrt(Math.max(0, ss / d.n));
-  return 1.06 * Math.min((iqr / 1.349) * Math.pow(d.n, -0.2), sd);
+  return 1.06 * Math.min(iqr / 1.349, sd) * Math.pow(d.n, -0.2);
 }
 ```
 

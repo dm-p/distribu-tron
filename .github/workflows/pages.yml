@@ -1,0 +1,7 @@
+name: Docs (reserved)
+on: { workflow_dispatch: {} }
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Docs site not built yet — see roadmap."
