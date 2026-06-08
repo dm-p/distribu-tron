@@ -16,4 +16,7 @@ describe("ecdf / cdf", () => {
     expect(cdf(d, 99)).toBe(1);
   });
   it("empty → []", () => { expect(ecdf(distribution([]))).toEqual([]); });
+  it("zero observation mass (all-zero weights) → []", () => {
+    expect(ecdf(distribution([{ value: 1, weight: 0 }, { value: 2, weight: 0 }]))).toEqual([]);
+  });
 });

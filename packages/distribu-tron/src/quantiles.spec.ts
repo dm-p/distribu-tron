@@ -52,6 +52,11 @@ describe("quantile (linear default reduces to type-7 for unit weights)", () => {
     const { q1, q2, q3, iqr } = quartiles(empty);
     expect(q1).toBeNaN(); expect(q2).toBeNaN(); expect(q3).toBeNaN(); expect(iqr).toBeNaN();
   });
+  it("p outside [0,1] — including NaN — throws RangeError", () => {
+    expect(() => quantile(d, 1.5)).toThrow(RangeError);
+    expect(() => quantile(d, -0.1)).toThrow(RangeError);
+    expect(() => quantile(d, NaN)).toThrow(RangeError);
+  });
 });
 
 describe("percentileRank", () => {

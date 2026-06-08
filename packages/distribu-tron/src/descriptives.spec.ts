@@ -38,6 +38,14 @@ describe("variance / stdev", () => {
     expect(Number.isNaN(mean(z))).toBe(true);
     expect(Number.isNaN(variance(z))).toBe(true);
     expect(Number.isNaN(stdev(z))).toBe(true);
+    expect(Number.isNaN(skewness(z))).toBe(true);
+    expect(Number.isNaN(kurtosis(z))).toBe(true);
+  });
+  it("sample variance of a single observation is undefined (NaN)", () => {
+    const one = distribution([{ value: 7, weight: 1 }]); // n=1
+    expect(Number.isNaN(variance(one, { sample: true }))).toBe(true);
+    expect(Number.isNaN(stdev(one, { sample: true }))).toBe(true);
+    expect(variance(one)).toBe(0); // population variance of one point is still 0
   });
 });
 

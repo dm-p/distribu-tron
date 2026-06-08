@@ -14,4 +14,9 @@ describe("boxplot", () => {
   it("no outliers when tight", () => {
     expect(boxplot(distribution([1, 2, 3, 4, 5])).outliers).toEqual([]);
   });
+  it("zero-weight values are not reported as outliers (no mass)", () => {
+    // value 100 carries zero weight, so it is not an observation and must not be an outlier
+    const d = distribution([{ value: 1, weight: 1 }, { value: 2, weight: 1 }, { value: 100, weight: 0 }]);
+    expect(boxplot(d).outliers).toEqual([]);
+  });
 });

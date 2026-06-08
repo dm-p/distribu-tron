@@ -45,6 +45,15 @@ describe("grouped consumers", () => {
     expect(ax).toEqual(bx); // still a shared grid
     for (const p of pts) expect(p.density).toBeGreaterThanOrEqual(0);
   });
+  it("throws when a grouping dimension collides with an output field name", () => {
+    // dimension named "weight" would overwrite a histogram bin's weight — fail fast instead
+    const collide = [
+      { weight: "A", value: 1 }, { weight: "A", value: 5 },
+      { weight: "B", value: 1 }, { weight: "B", value: 9 },
+    ];
+    const gd = group(collide, { by: "weight", value: "value" });
+    expect(() => groupedHistogram(gd)).toThrow(RangeError);
+  });
   it("summarize surfaces subtotals + grand total under rollup", () => {
     const gd = group(rows, { by: "cat", value: "value", weight: "weight", rollup: true, totalLabel: "(All)" });
     const s = summarize(gd);

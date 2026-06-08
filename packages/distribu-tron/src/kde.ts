@@ -1,16 +1,11 @@
 import type { Distribution, KdeOptions, KdePoint } from "./types";
 import { ticks } from "./internal/ticks";
+import { silvermanFor } from "./internal/silverman";
+
+export { silvermanBandwidth } from "./internal/silverman";
 
 const ZERO = 1e-8;
 const DEFAULT_RESOLUTION = 50;
-
-/**
- * Robust Silverman rule-of-thumb bandwidth: `1.06 · min(stdev, IQR/1.349) · n^(-1/5)`.
- * The `n^(-1/5)` factor scales whichever spread estimate (stdev or the IQR-derived sigma) is smaller.
- */
-export function silvermanBandwidth(n: number, iqr: number, stdev: number): number {
-  return 1.06 * Math.min(iqr / 1.349, stdev) * Math.pow(n, -0.2);
-}
 
 /**
  * Windowed Epanechnikov kernel density estimate over the prepared distribution.
@@ -34,15 +29,9 @@ export function kde(d: Distribution, options: KdeOptions = {}): KdePoint[] {
 }
 
 function resolveBandwidth(d: Distribution, bw: KdeOptions["bandwidth"]): number {
-  if (typeof bw === "number") return bw;
-  // "silverman" (default): needs IQR + population stdev
-  const q = (p: number) => { const r = Math.max(0, Math.min(p * (d.n - 1), d.n - 1)); return d.values[idx(d, r)]!; };
-  const iqr = q(0.75) - q(0.25);
-  let sum = 0; for (let i = 0; i < d.size; i++) sum += d.values[i]! * d.weights[i]!;
-  const mu = sum / d.n;
-  let ss = 0; for (let i = 0; i < d.size; i++) { const x = d.values[i]! - mu; ss += d.weights[i]! * x * x; }
-  const sd = Math.sqrt(Math.max(0, ss / d.n));
-  return silvermanBandwidth(d.n, iqr, sd);
+  // A numeric bandwidth passes through; "silverman" (the default) is derived from the shared helper,
+  // which uses the canonical interpolated IQR + weighted population stdev.
+  return typeof bw === "number" ? bw : silvermanFor(d);
 }
 
 function buildSamplePoints(min: number, max: number, resolution: number, clamp: boolean): number[] {
@@ -79,11 +68,6 @@ function upperBound(d: Distribution, t: number): number {
   let lo = 0, hi = d.size;
   while (lo < hi) { const m = (lo + hi) >>> 1; if (d.values[m]! <= t) lo = m + 1; else hi = m; }
   return lo;
-}
-function idx(d: Distribution, r: number): number {
-  let lo = 0, hi = d.size;
-  while (lo < hi) { const m = (lo + hi) >>> 1; if (d.cumulative[m]! <= r) lo = m + 1; else hi = m; }
-  return Math.min(lo, d.size - 1);
 }
 function trimZeroTails(points: KdePoint[]): KdePoint[] {
   if (points.length === 0) return points;

@@ -39,6 +39,16 @@ describe("kde", () => {
     // stdev 0.3 < iqr/1.349 (7.41) → 1.06 * 0.3 * n^-0.2  (regression guard: n^-0.2 must apply to stdev)
     expect(silvermanBandwidth(100, 10, 0.3)).toBeCloseTo(1.06 * 0.3 * Math.pow(100, -0.2), 12);
   });
+  it("silverman falls back to stdev when IQR is 0", () => {
+    // a heavily-tied distribution (IQR=0) must not collapse the bandwidth to 0
+    expect(silvermanBandwidth(100, 0, 2)).toBeCloseTo(1.06 * 2 * Math.pow(100, -0.2), 12);
+  });
+  it("peaked-but-spread distribution (IQR=0, stdev>0) still produces a curve", () => {
+    // ~50% of mass on the middle value → interpolated/step IQR is 0, but there is real spread
+    const peaked = distribution([{ value: 1, weight: 1 }, { value: 2, weight: 100 }, { value: 3, weight: 1 }]);
+    const pts = kde(peaked); // default silverman
+    expect(pts.length).toBeGreaterThan(0);
+  });
   it("silverman default path produces a usable curve (no explicit bandwidth)", () => {
     const pts = kde(d); // bandwidth defaults to silverman
     expect(pts.length).toBeGreaterThan(0);

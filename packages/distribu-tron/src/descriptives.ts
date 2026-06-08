@@ -21,13 +21,11 @@ function centralMoment(d: Distribution, m: number, mu: number): number {
 }
 
 export function variance(d: Distribution, opts: { sample?: boolean } = {}): number {
-  if (d.size === 0) return NaN;
-  if (d.n <= 0) return NaN; // no observation mass (e.g. all-zero weights) — undefined, like mean
-  if (d.n <= (opts.sample ? 1 : 0)) return 0;
-  const mu = mean(d);
-  const ss = centralMoment(d, 2, mu);
+  if (d.size === 0 || d.n <= 0) return NaN; // empty / no observation mass — undefined, like mean
   const denom = opts.sample ? d.n - 1 : d.n;
-  const v = ss / denom;
+  if (denom <= 0) return NaN; // sample variance needs n > 1; otherwise undefined (0/0)
+  const mu = mean(d);
+  const v = centralMoment(d, 2, mu) / denom;
   return v > 0 && Number.isFinite(v) ? v : 0;
 }
 
@@ -71,7 +69,7 @@ export function mad(d: Distribution): number {
 }
 
 export function skewness(d: Distribution): number {
-  if (d.size === 0) return NaN;
+  if (d.size === 0 || d.n <= 0) return NaN; // empty / no observation mass
   const mu = mean(d);
   const m2 = centralMoment(d, 2, mu) / d.n;
   if (!(m2 > 0)) return 0;
@@ -80,7 +78,7 @@ export function skewness(d: Distribution): number {
 }
 
 export function kurtosis(d: Distribution): number {
-  if (d.size === 0) return NaN;
+  if (d.size === 0 || d.n <= 0) return NaN; // empty / no observation mass
   const mu = mean(d);
   const m2 = centralMoment(d, 2, mu) / d.n;
   if (!(m2 > 0)) return 0;

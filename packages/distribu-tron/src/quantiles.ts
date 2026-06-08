@@ -19,7 +19,7 @@ function valueAtRank(d: Distribution, r: number): number {
  * @returns `NaN` for an empty or zero-mass distribution.
  */
 export function quantile(d: Distribution, p: number, opts: { method?: QuantileMethod } = {}): number {
-  if (p < 0 || p > 1) throw new RangeError(`p must be in [0,1], got ${p}`);
+  if (!(p >= 0 && p <= 1)) throw new RangeError(`p must be in [0,1], got ${p}`); // also rejects NaN
   if (d.size === 0 || d.n <= 0) return NaN;
   if (d.size === 1) return d.values[0]!;
   const method = opts.method ?? "linear";

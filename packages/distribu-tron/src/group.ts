@@ -6,6 +6,7 @@ import { distribution } from "./distribution";
 import { histogram } from "./histogram";
 import { kde } from "./kde";
 import { summary } from "./summary";
+import { silvermanFor } from "./internal/silverman";
 
 function acc<T>(a: Accessor<T>): (row: Record<string, unknown>) => T {
   return typeof a === "function" ? a : (row) => row[a] as T;
@@ -96,6 +97,15 @@ function selectGroups(gd: GroupedDistribution, sel: LevelSelect): DistributionGr
 }
 
 function tag<T extends object>(g: DistributionGroup, row: T): Tagged<T> {
+  // Fail fast on the reserved-field-name collision (see {@link Tagged}): a dimension named after an
+  // output field would silently overwrite that statistic/bin value. Throw instead of corrupting.
+  for (const k of Object.keys(g.key)) {
+    if (k === "depth" || Object.prototype.hasOwnProperty.call(row, k)) {
+      throw new RangeError(
+        `grouping dimension "${k}" collides with a reserved output field ("depth" or a statistic/bin field); rename the dimension.`,
+      );
+    }
+  }
   return { ...row, ...g.key, depth: g.depth } as Tagged<T>;
 }
 
@@ -140,6 +150,10 @@ export function groupedHistogram(
  * One KDE curve per selected group, all sharing identical sample points and a single bandwidth
  * (derived once from the overall distribution unless a numeric `bandwidth` is given) so the curves
  * are comparable. Leaves only by default. See {@link Tagged} for the reserved-field-name caveat.
+ *
+ * `clamp` applies to the SHARED grid: it restricts the common sample points to the overall
+ * distribution's `[min, max]`. Per-group curves are intentionally NOT clamped to each group's own
+ * domain — they all share one x-axis, which is the point of a grouped KDE.
  */
 export function groupedKde(
   gd: GroupedDistribution,
@@ -167,15 +181,4 @@ function resolveSharedBandwidth(overall: Distribution, bw: KdeOptions["bandwidth
   // Manual bandwidth passes through; otherwise derive Silverman once from the overall
   // rollup so every group's curve uses the same width (comparable across groups).
   return typeof bw === "number" ? bw : silvermanFor(overall);
-}
-
-function silvermanFor(d: Distribution): number {
-  if (d.size === 0 || d.n <= 0) return 0;
-  const q = (p: number) => { const r = Math.max(0, Math.min(p * (d.n - 1), d.n - 1)); let lo = 0, hi = d.size; while (lo < hi) { const m = (lo + hi) >>> 1; if (d.cumulative[m]! <= r) lo = m + 1; else hi = m; } return d.values[Math.min(lo, d.size - 1)]!; };
-  const iqr = q(0.75) - q(0.25);
-  let s = 0; for (let i = 0; i < d.size; i++) s += d.values[i]! * d.weights[i]!;
-  const mu = s / d.n;
-  let ss = 0; for (let i = 0; i < d.size; i++) { const x = d.values[i]! - mu; ss += d.weights[i]! * x * x; }
-  const sd = Math.sqrt(Math.max(0, ss / d.n));
-  return 1.06 * Math.min(iqr / 1.349, sd) * Math.pow(d.n, -0.2);
 }
