@@ -593,19 +593,23 @@ export function distribution(input: DistributionInput, options: DistributionOpti
   const t1 = options.profile ? performance.now() : 0;
 
   let values: Float64Array, weights: Float64Array;
+  let aggregateMs = 0;
+  let sortMs = 0;
   if (options.sorted) {
-    // Caller guarantees ascending & distinct: no aggregate, no sort.
+    // Caller guarantees ascending & distinct: no aggregate, no sort (both phases stay 0).
     values = Float64Array.from(rawV);
     weights = Float64Array.from(rawW);
   } else {
-    // Aggregate duplicates into a map, then sort the distinct keys.
+    // Aggregate duplicates into a map...
     const merged = new Map<number, number>();
     for (let i = 0; i < rawV.length; i++) merged.set(rawV[i]!, (merged.get(rawV[i]!) ?? 0) + rawW[i]!);
+    const tAgg = options.profile ? performance.now() : 0;
+    // ...then sort the distinct keys and materialize the substrate.
     const keys = Array.from(merged.keys()).sort((a, b) => a - b);
     values = Float64Array.from(keys);
     weights = Float64Array.from(keys, (k) => merged.get(k)!);
+    if (options.profile) { aggregateMs = tAgg - t1; sortMs = performance.now() - tAgg; }
   }
-  const t2 = options.profile ? performance.now() : 0;
 
   const size = values.length;
   const cumulative = new Float64Array(size);
@@ -613,7 +617,7 @@ export function distribution(input: DistributionInput, options: DistributionOpti
   for (let i = 0; i < size; i++) { running += weights[i]!; cumulative[i] = running; }
 
   const timings: PrepTimings | undefined = options.profile
-    ? { validateMs: t1 - t0, aggregateMs: 0, sortMs: t2 - t1, totalMs: performance.now() - t0 }
+    ? { validateMs: t1 - t0, aggregateMs, sortMs, totalMs: performance.now() - t0 }
     : undefined;
 
   return {
@@ -627,7 +631,7 @@ export function distribution(input: DistributionInput, options: DistributionOpti
 }
 ```
 
-> Note: `aggregateMs` is folded into `sortMs` here (one pass builds the map + sort). Kept in the type for future per-phase granularity; reporting it as 0 is acceptable for v1.
+> Note: `aggregateMs` (Map dedup) and `sortMs` (key sort + substrate materialization) are timed separately via the `tAgg` checkpoint, so `PrepTimings` carries accurate per-phase numbers. The `sorted: true` fast path skips both, leaving each at 0.
 
 - [ ] **Step 4: Run → pass.** **Step 5: Commit (if asked)** `git commit -m "feat: distribution() factory"`
 
@@ -1830,6 +1834,3 @@ Bump `packages/distribu-tron/package.json` to `0.1.0`, then the user creates a G
 - [ ] `pnpm -C packages/distribu-tron build` — emits `dist/index.js` (ESM) + `dist/index.d.ts`.
 - [ ] `pnpm -C packages/distribu-tron pack` — tarball contains only `dist/` + metadata.
 - [ ] `pnpm -C packages/distribu-tron bench` — prints comparison numbers (paste into README).
-
-## Stage 2 (separate plan, after publish)
-Swap `rayfin-distribution-stats` to consume the published package: add the dependency, replace `src/lib/distribution/` imports with `distribu-tron`, adapt the DAX path (`count → weight`, `{ sorted: true }`), and update the app's hook/cards to the `distribution()` + free-function API. Expect the documented median/quartile shift from linear interpolation. This will be written as its own plan once `distribu-tron` is on npm.

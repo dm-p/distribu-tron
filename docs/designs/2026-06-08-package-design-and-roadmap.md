@@ -295,18 +295,6 @@ distribu-tron/                  (repo root)
 - Turborepo / changesets are intentionally **not** adopted until there is genuinely more
   than one published package.
 
-### Consume-back into rayfin-distribution-stats
-Once published, this app replaces `src/lib/distribution/` with the package:
-- The DAX adapter maps the existing `DistinctValue { value, count }` → `{ value, weight }`
-  (drop the blank/null row as today) and constructs the distribution with `sorted: true`
-  (the DAX path already sorts ascending).
-- App call sites move from `computeStatistics/computeBins/computeKde` to
-  `distribution()` + the free functions (`summary`/`quartiles`, `histogram`, `kde`).
-- **Behavior shift to expect:** `quantile`'s default `linear` interpolation will change the
-  displayed median/quartiles slightly versus the seed's nearest-rank. This is intended
-  (more standard); there is no DAX percentile to contradict it (those were redacted for
-  OOM, so the client is the source of truth).
-
 ## Out of scope (v1)
 - Charting adapters (separate roadmap packages).
 - Additional kernels / bandwidth selectors / binning rules / inference (roadmap phases 2–4).
