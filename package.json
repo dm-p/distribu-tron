@@ -1,0 +1,15 @@
+{
+  "name": "distribu-tron-workspace",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.5.2",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "pnpm -C packages/distribu-tron build",
+    "test": "pnpm -C packages/distribu-tron test",
+    "lint": "pnpm -C packages/distribu-tron lint",
+    "format": "pnpm -C packages/distribu-tron format",
+    "typecheck": "pnpm -C packages/distribu-tron typecheck",
+    "bench": "pnpm -C packages/distribu-tron bench"
+  }
+}
