@@ -22,6 +22,9 @@ summary(d);         // { n, mean, stdev, median, q1, q3, iqr, skewness, kurtosis
 histogram(d);       // [{ x0, x1, weight }, ...] with sensible auto-bins
 ```
 
+- Useful for... **when your data is already aggregated or weighted** - a `{ value, weight }` frequency table from a `GROUP BY`, or values with fractional importance - and you'll read several statistics off it.
+- Less useful for... **when you have a raw, unweighted array and need a single number**; `simple-statistics` or `d3-array` are faster and lighter for that. The [Performance](#performance---and-when-not-to-use-this) section below has the numbers.
+
 ## Purpose
 
 Almost every JS stats library assumes **raw, unit-weight samples**. But real analytical data
