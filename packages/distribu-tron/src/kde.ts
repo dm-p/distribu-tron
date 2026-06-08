@@ -39,9 +39,11 @@ function buildSamplePoints(min: number, max: number, resolution: number, clamp: 
   if (sample.length === 0) return [];
   const step = sample.length > 1 ? sample[1]! - sample[0]! : 0;
   if (clamp) {
+    // Anchor the grid ends to exactly [min, max].
     if (sample[0]! > min) sample.unshift(min);
     if (sample[sample.length - 1]! < max) sample.push(max);
   } else if (step > 0) {
+    // Pad buffer steps onto each end so the kernel can taper to zero beyond the data range.
     const buffer = Math.floor(resolution / 2);
     for (let i = 0; i < buffer; i++) { sample.unshift(sample[0]! - step); sample.push(sample[sample.length - 1]! + step); }
   }

@@ -12,6 +12,58 @@ function acc<T>(a: Accessor<T>): (row: Record<string, unknown>) => T {
   return typeof a === "function" ? a : (row) => row[a] as T;
 }
 
+type Bucket = { key: Record<string, GroupKeyValue>; pairs: WeightedValue[] };
+
+/** Get-or-create the bucket whose id is `key` projected onto `idDims`, then append `pairs` to it. */
+function bucketPush(buckets: Map<string, Bucket>, idDims: string[], key: Record<string, GroupKeyValue>, pairs: WeightedValue[]): void {
+  const id = JSON.stringify(idDims.map((d) => key[d]));
+  let bucket = buckets.get(id);
+  if (!bucket) { bucket = { key, pairs: [] }; buckets.set(id, bucket); }
+  for (const p of pairs) bucket.pairs.push(p);
+}
+
+/** Bucket rows into leaf groups keyed by the full dimension tuple, collecting every pair for `overall`. */
+function bucketLeaves(
+  rows: ReadonlyArray<Record<string, unknown>>,
+  dimensions: string[],
+  getValue: (row: Record<string, unknown>) => number,
+  getWeight: (row: Record<string, unknown>) => number,
+): { leafBuckets: Map<string, Bucket>; allPairs: WeightedValue[] } {
+  const leafBuckets = new Map<string, Bucket>();
+  const allPairs: WeightedValue[] = [];
+  for (const row of rows) {
+    const key: Record<string, GroupKeyValue> = {};
+    for (const dim of dimensions) key[dim] = row[dim] as GroupKeyValue;
+    const pair = { value: getValue(row), weight: getWeight(row) };
+    bucketPush(leafBuckets, dimensions, key, [pair]);
+    allPairs.push(pair);
+  }
+  return { leafBuckets, allPairs };
+}
+
+/** A leaf key with every dimension at index ≥ `depth` replaced by the rollup total label. */
+function rolledKey(dimensions: string[], leafKey: Record<string, GroupKeyValue>, depth: number, totalLabel: GroupKeyValue): Record<string, GroupKeyValue> {
+  const key: Record<string, GroupKeyValue> = {};
+  for (let i = 0; i < dimensions.length; i++) key[dimensions[i]!] = i < depth ? leafKey[dimensions[i]!]! : totalLabel;
+  return key;
+}
+
+/** Prefix-ROLLUP subtotals: for depth = dims-1 … 1, merge leaves that share their first `depth` dimensions. */
+function rollupSubtotals(leafBuckets: Map<string, Bucket>, dimensions: string[], totalLabel: GroupKeyValue, sorted?: boolean): DistributionGroup[] {
+  const subtotals: DistributionGroup[] = [];
+  for (let depth = dimensions.length - 1; depth >= 1; depth--) {
+    const activeDims = dimensions.slice(0, depth);
+    const buckets = new Map<string, Bucket>();
+    for (const leaf of leafBuckets.values()) {
+      bucketPush(buckets, activeDims, rolledKey(dimensions, leaf.key, depth, totalLabel), leaf.pairs);
+    }
+    for (const b of buckets.values()) {
+      subtotals.push({ key: b.key, level: activeDims, depth, distribution: distribution(b.pairs, { sorted }) });
+    }
+  }
+  return subtotals;
+}
+
 /**
  * Group rows into per-key {@link Distribution}s. Returns the leaf groups, the `overall` distribution,
  * and (with `rollup: true`) prefix-ROLLUP subtotals + a grand total tagged by `level`/`depth`.
@@ -21,57 +73,22 @@ function acc<T>(a: Accessor<T>): (row: Record<string, unknown>) => T {
 export function group(rows: ReadonlyArray<Record<string, unknown>>, spec: GroupSpec): GroupedDistribution {
   const dimensions = Array.isArray(spec.by) ? spec.by : [spec.by];
   const totalLabel = spec.totalLabel ?? null;
+  const sorted = spec.sorted;
   const getValue = acc<number>(spec.value);
   const getWeight = spec.weight ? acc<number>(spec.weight) : () => 1;
 
-  // 1. Bucket rows into leaf groups keyed by the full dimension tuple.
-  const leafBuckets = new Map<string, { key: Record<string, GroupKeyValue>; pairs: WeightedValue[] }>();
-  const allPairs: WeightedValue[] = [];
-  for (const row of rows) {
-    const keyObj: Record<string, GroupKeyValue> = {};
-    for (const dim of dimensions) keyObj[dim] = row[dim] as GroupKeyValue;
-    const id = JSON.stringify(dimensions.map((dim) => keyObj[dim]));
-    let bucket = leafBuckets.get(id);
-    if (!bucket) { bucket = { key: keyObj, pairs: [] }; leafBuckets.set(id, bucket); }
-    const pair = { value: getValue(row), weight: getWeight(row) };
-    bucket.pairs.push(pair);
-    allPairs.push(pair);
-  }
-
-  const leaves: DistributionGroup[] = Array.from(leafBuckets.values()).map((b) => ({
-    key: b.key,
-    level: [...dimensions],
-    depth: dimensions.length,
-    distribution: distribution(b.pairs, { sorted: spec.sorted }),
+  const { leafBuckets, allPairs } = bucketLeaves(rows, dimensions, getValue, getWeight);
+  const leaves: DistributionGroup[] = Array.from(leafBuckets.values(), (b) => ({
+    key: b.key, level: [...dimensions], depth: dimensions.length, distribution: distribution(b.pairs, { sorted }),
   }));
+  const overall = distribution(allPairs, { sorted });
 
-  const overall = distribution(allPairs, { sorted: spec.sorted });
+  if (!spec.rollup) return { dimensions, groups: leaves, leaves, overall };
 
-  let groups: DistributionGroup[] = leaves;
-  if (spec.rollup) {
-    const subtotals: DistributionGroup[] = [];
-    // Prefix ROLLUP: for depth = dims-1 down to 1, group leaves by the first `depth` dims.
-    for (let depth = dimensions.length - 1; depth >= 1; depth--) {
-      const activeDims = dimensions.slice(0, depth);
-      const buckets = new Map<string, { key: Record<string, GroupKeyValue>; pairs: WeightedValue[] }>();
-      for (const b of leafBuckets.values()) {
-        const key: Record<string, GroupKeyValue> = {};
-        for (let i = 0; i < dimensions.length; i++) key[dimensions[i]!] = i < depth ? b.key[dimensions[i]!]! : totalLabel;
-        const id = JSON.stringify(activeDims.map((dim) => key[dim]));
-        let bucket = buckets.get(id);
-        if (!bucket) { bucket = { key, pairs: [] }; buckets.set(id, bucket); }
-        bucket.pairs.push(...b.pairs);
-      }
-      for (const bk of buckets.values()) {
-        subtotals.push({ key: bk.key, level: activeDims, depth, distribution: distribution(bk.pairs, { sorted: spec.sorted }) });
-      }
-    }
-    const grandKey: Record<string, GroupKeyValue> = {};
-    for (const dim of dimensions) grandKey[dim] = totalLabel;
-    const grand: DistributionGroup = { key: grandKey, level: [], depth: 0, distribution: overall };
-    groups = [...leaves, ...subtotals, grand];
-  }
-
+  const grandKey: Record<string, GroupKeyValue> = {};
+  for (const dim of dimensions) grandKey[dim] = totalLabel;
+  const grand: DistributionGroup = { key: grandKey, level: [], depth: 0, distribution: overall };
+  const groups = [...leaves, ...rollupSubtotals(leafBuckets, dimensions, totalLabel, sorted), grand];
   return { dimensions, groups, leaves, overall };
 }
 

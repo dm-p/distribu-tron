@@ -4,27 +4,35 @@ function isColumnar(x: DistributionInput): x is { values: ArrayLike<number>; wei
   return !Array.isArray(x) && typeof x === "object" && x !== null && "values" in x;
 }
 
+type Collect = (value: number, weight: number) => void;
+
+function validatePair(v: number, w: number): void {
+  if (!Number.isFinite(v)) throw new RangeError(`value must be finite, got ${v}`);
+  if (!(w >= 0) || !Number.isFinite(w)) throw new RangeError(`weight must be a finite, non-negative number, got ${w}`);
+}
+
+function readColumnar(input: { values: ArrayLike<number>; weights?: ArrayLike<number> }, collect: Collect): void {
+  const vs = input.values, ws = input.weights;
+  if (ws && ws.length !== vs.length) {
+    throw new RangeError(`columnar values and weights must be the same length, got ${vs.length} and ${ws.length}`);
+  }
+  for (let i = 0; i < vs.length; i++) collect(vs[i]!, ws ? ws[i]! : 1);
+}
+
+function readRows(input: Array<number | WeightedValue>, collect: Collect): void {
+  for (const item of input) {
+    if (typeof item === "number") collect(item, 1);
+    else collect(item.value, item.weight);
+  }
+}
+
 /** Pull (value, weight) pairs out of any supported input, validating as we go. */
 function toPairs(input: DistributionInput): { values: number[]; weights: number[] } {
   const values: number[] = [];
   const weights: number[] = [];
-  const pushPair = (v: number, w: number) => {
-    if (!Number.isFinite(v)) throw new RangeError(`value must be finite, got ${v}`);
-    if (!(w >= 0) || !Number.isFinite(w)) throw new RangeError(`weight must be a finite, non-negative number, got ${w}`);
-    values.push(v); weights.push(w);
-  };
-  if (isColumnar(input)) {
-    const vs = input.values, ws = input.weights;
-    if (ws && ws.length !== vs.length) {
-      throw new RangeError(`columnar values and weights must be the same length, got ${vs.length} and ${ws.length}`);
-    }
-    for (let i = 0; i < vs.length; i++) pushPair(vs[i]!, ws ? ws[i]! : 1);
-  } else {
-    for (const item of input as Array<number | WeightedValue>) {
-      if (typeof item === "number") pushPair(item, 1);
-      else pushPair(item.value, item.weight);
-    }
-  }
+  const collect: Collect = (v, w) => { validatePair(v, w); values.push(v); weights.push(w); };
+  if (isColumnar(input)) readColumnar(input, collect);
+  else readRows(input as Array<number | WeightedValue>, collect);
   return { values, weights };
 }
 
