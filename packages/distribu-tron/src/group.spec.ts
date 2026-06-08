@@ -22,7 +22,13 @@ describe("group", () => {
     expect(bikes24.depth).toBe(2);
   });
   it("rollup adds subtotals + grand total with level/depth", () => {
-    const gd = group(rows, { by: ["category", "series"], value: "value", weight: "weight", rollup: true, totalLabel: "(All)" });
+    const gd = group(rows, {
+      by: ["category", "series"],
+      value: "value",
+      weight: "weight",
+      rollup: true,
+      totalLabel: "(All)",
+    });
     const catSub = gd.groups.find((g) => g.depth === 1 && g.key.category === "Bikes")!;
     expect(catSub.key.series).toBe("(All)");
     expect(catSub.level).toEqual(["category"]);

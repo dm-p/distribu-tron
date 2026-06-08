@@ -3,11 +3,18 @@ import { distribution } from "./distribution";
 
 describe("distribution", () => {
   it("builds from a frequency table (sorted, distinct, cumulative)", () => {
-    const d = distribution([{ value: 3, weight: 1 }, { value: 1, weight: 2 }, { value: 2, weight: 5 }]);
+    const d = distribution([
+      { value: 3, weight: 1 },
+      { value: 1, weight: 2 },
+      { value: 2, weight: 5 },
+    ]);
     expect(Array.from(d.values)).toEqual([1, 2, 3]);
     expect(Array.from(d.weights)).toEqual([2, 5, 1]);
     expect(Array.from(d.cumulative)).toEqual([2, 7, 8]);
-    expect(d.n).toBe(8); expect(d.size).toBe(3); expect(d.min).toBe(1); expect(d.max).toBe(3);
+    expect(d.n).toBe(8);
+    expect(d.size).toBe(3);
+    expect(d.min).toBe(1);
+    expect(d.max).toBe(3);
   });
   it("aggregates raw number[] (weight 1 each, merged)", () => {
     const d = distribution([5, 1, 5, 5, 1]);
@@ -20,12 +27,21 @@ describe("distribution", () => {
     expect(d.n).toBe(7);
   });
   it("merges duplicate values in a table", () => {
-    const d = distribution([{ value: 1, weight: 2 }, { value: 1, weight: 3 }]);
+    const d = distribution([
+      { value: 1, weight: 2 },
+      { value: 1, weight: 3 },
+    ]);
     expect(Array.from(d.values)).toEqual([1]);
     expect(Array.from(d.weights)).toEqual([5]);
   });
   it("sorted:true trusts order and skips aggregation", () => {
-    const d = distribution([{ value: 1, weight: 2 }, { value: 2, weight: 3 }], { sorted: true });
+    const d = distribution(
+      [
+        { value: 1, weight: 2 },
+        { value: 2, weight: 3 },
+      ],
+      { sorted: true },
+    );
     expect(Array.from(d.values)).toEqual([1, 2]);
   });
   it("rejects negative / non-finite", () => {
@@ -43,14 +59,19 @@ describe("distribution", () => {
     expect(() => distribution({ values: [1, 2, 3], weights: [10, 20] })).toThrow(RangeError);
   });
   it("permits zero weights (flat cumulative step)", () => {
-    const d = distribution([{ value: 1, weight: 0 }, { value: 2, weight: 5 }]);
+    const d = distribution([
+      { value: 1, weight: 0 },
+      { value: 2, weight: 5 },
+    ]);
     expect(Array.from(d.cumulative)).toEqual([0, 5]);
     expect(d.n).toBe(5);
   });
   it("empty distribution is valid", () => {
     const d = distribution([]);
-    expect(d.size).toBe(0); expect(d.n).toBe(0);
-    expect(d.min).toBe(Infinity); expect(d.max).toBe(-Infinity);
+    expect(d.size).toBe(0);
+    expect(d.n).toBe(0);
+    expect(d.min).toBe(Infinity);
+    expect(d.max).toBe(-Infinity);
   });
   it("profile attaches prep timings when asked", () => {
     const d = distribution([3, 1, 2], { profile: true });

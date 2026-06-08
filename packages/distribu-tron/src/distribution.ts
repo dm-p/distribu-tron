@@ -12,7 +12,8 @@ function validatePair(v: number, w: number): void {
 }
 
 function readColumnar(input: { values: ArrayLike<number>; weights?: ArrayLike<number> }, collect: Collect): void {
-  const vs = input.values, ws = input.weights;
+  const vs = input.values,
+    ws = input.weights;
   if (ws && ws.length !== vs.length) {
     throw new RangeError(`columnar values and weights must be the same length, got ${vs.length} and ${ws.length}`);
   }
@@ -30,7 +31,11 @@ function readRows(input: Array<number | WeightedValue>, collect: Collect): void 
 function toPairs(input: DistributionInput): { values: number[]; weights: number[] } {
   const values: number[] = [];
   const weights: number[] = [];
-  const collect: Collect = (v, w) => { validatePair(v, w); values.push(v); weights.push(w); };
+  const collect: Collect = (v, w) => {
+    validatePair(v, w);
+    values.push(v);
+    weights.push(w);
+  };
   if (isColumnar(input)) readColumnar(input, collect);
   else readRows(input as Array<number | WeightedValue>, collect);
   return { values, weights };
@@ -73,7 +78,10 @@ export function distribution(input: DistributionInput, options: DistributionOpti
   const size = values.length;
   const cumulative = new Float64Array(size);
   let running = 0;
-  for (let i = 0; i < size; i++) { running += weights[i]!; cumulative[i] = running; }
+  for (let i = 0; i < size; i++) {
+    running += weights[i]!;
+    cumulative[i] = running;
+  }
 
   const timings: PrepTimings | undefined = options.profile
     ? { validateMs: t1 - t0, aggregateMs: 0, sortMs: t2 - t1, totalMs: performance.now() - t0 }
@@ -84,7 +92,9 @@ export function distribution(input: DistributionInput, options: DistributionOpti
     n: running,
     min: size ? values[0]! : Infinity,
     max: size ? values[size - 1]! : -Infinity,
-    values, weights, cumulative,
+    values,
+    weights,
+    cumulative,
     ...(timings ? { timings } : {}),
   };
 }

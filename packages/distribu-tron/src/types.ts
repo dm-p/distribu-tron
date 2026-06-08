@@ -1,13 +1,21 @@
-export interface WeightedValue { value: number; weight: number }
+export interface WeightedValue {
+  value: number;
+  weight: number;
+}
 
-export type DistributionInput =
-  | WeightedValue[]
-  | number[]
-  | { values: ArrayLike<number>; weights?: ArrayLike<number> };
+export type DistributionInput = WeightedValue[] | number[] | { values: ArrayLike<number>; weights?: ArrayLike<number> };
 
-export interface DistributionOptions { sorted?: boolean; profile?: boolean }
+export interface DistributionOptions {
+  sorted?: boolean;
+  profile?: boolean;
+}
 
-export interface PrepTimings { validateMs: number; aggregateMs: number; sortMs: number; totalMs: number }
+export interface PrepTimings {
+  validateMs: number;
+  aggregateMs: number;
+  sortMs: number;
+  totalMs: number;
+}
 
 export interface Distribution {
   readonly size: number;
@@ -23,18 +31,47 @@ export interface Distribution {
 export type QuantileMethod = "linear" | "lower" | "higher" | "nearest" | "midpoint";
 
 export interface SummaryStatistics {
-  n: number; size: number; mean: number; stdev: number; min: number; max: number;
-  range: number; mode: number; mad: number; skewness: number; kurtosis: number;
-  q1: number; median: number; q3: number; iqr: number;
+  n: number;
+  size: number;
+  mean: number;
+  stdev: number;
+  min: number;
+  max: number;
+  range: number;
+  mode: number;
+  mad: number;
+  skewness: number;
+  kurtosis: number;
+  q1: number;
+  median: number;
+  q3: number;
+  iqr: number;
 }
 
-export interface Bin { x0: number; x1: number; weight: number }
-export interface KdePoint { x: number; density: number }
-export interface EcdfPoint { x: number; p: number }
+export interface Bin {
+  x0: number;
+  x1: number;
+  weight: number;
+}
+export interface KdePoint {
+  x: number;
+  density: number;
+}
+export interface EcdfPoint {
+  x: number;
+  p: number;
+}
 
 export interface BoxplotResult {
-  min: number; q1: number; median: number; q3: number; max: number;
-  iqr: number; lowerFence: number; upperFence: number; outliers: number[];
+  min: number;
+  q1: number;
+  median: number;
+  q3: number;
+  max: number;
+  iqr: number;
+  lowerFence: number;
+  upperFence: number;
+  outliers: number[];
 }
 
 export interface HistogramOptions {
@@ -67,8 +104,8 @@ export interface GroupSpec {
 
 export interface DistributionGroup {
   readonly key: Record<string, GroupKeyValue>;
-  readonly level: string[];   // dimensions active (not rolled up)
-  readonly depth: number;     // level.length
+  readonly level: string[]; // dimensions active (not rolled up)
+  readonly depth: number; // level.length
   readonly distribution: Distribution;
 }
 
@@ -80,4 +117,7 @@ export interface GroupedDistribution {
 }
 
 /** Which rollup levels a grouped consumer (summarize/groupedHistogram/groupedKde) should emit. */
-export interface LevelSelect { includeSubtotals?: boolean; includeOverall?: boolean }
+export interface LevelSelect {
+  includeSubtotals?: boolean;
+  includeOverall?: boolean;
+}

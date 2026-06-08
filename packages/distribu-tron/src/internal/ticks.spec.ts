@@ -17,5 +17,7 @@ describe("nice", () => {
   });
 });
 describe("tickIncrement", () => {
-  it("step", () => { expect(tickIncrement(0, 10, 5)).toBe(2); });
+  it("step", () => {
+    expect(tickIncrement(0, 10, 5)).toBe(2);
+  });
 });

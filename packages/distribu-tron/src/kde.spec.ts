@@ -3,8 +3,13 @@ import { distribution } from "./distribution";
 import { kde, silvermanBandwidth } from "./kde";
 
 const d = distribution([
-  { value: 1, weight: 2 }, { value: 2, weight: 5 }, { value: 3, weight: 9 },
-  { value: 4, weight: 7 }, { value: 5, weight: 4 }, { value: 6, weight: 2 }, { value: 7, weight: 1 },
+  { value: 1, weight: 2 },
+  { value: 2, weight: 5 },
+  { value: 3, weight: 9 },
+  { value: 4, weight: 7 },
+  { value: 5, weight: 4 },
+  { value: 6, weight: 2 },
+  { value: 7, weight: 1 },
 ]);
 
 function naive(x: number, h: number): number {
@@ -18,7 +23,9 @@ function naive(x: number, h: number): number {
 }
 
 describe("kde", () => {
-  it("empty → []", () => { expect(kde(distribution([]), {})).toEqual([]); });
+  it("empty → []", () => {
+    expect(kde(distribution([]), {})).toEqual([]);
+  });
   it("windowed == naive at every returned point", () => {
     const pts = kde(d, { bandwidth: 1.5, clamp: false, resolution: 50 });
     expect(pts.length).toBeGreaterThan(0);
@@ -45,7 +52,11 @@ describe("kde", () => {
   });
   it("peaked-but-spread distribution (IQR=0, stdev>0) still produces a curve", () => {
     // ~50% of mass on the middle value → interpolated/step IQR is 0, but there is real spread
-    const peaked = distribution([{ value: 1, weight: 1 }, { value: 2, weight: 100 }, { value: 3, weight: 1 }]);
+    const peaked = distribution([
+      { value: 1, weight: 1 },
+      { value: 2, weight: 100 },
+      { value: 3, weight: 1 },
+    ]);
     const pts = kde(peaked); // default silverman
     expect(pts.length).toBeGreaterThan(0);
   });

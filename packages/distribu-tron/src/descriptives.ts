@@ -10,8 +10,12 @@ export function mean(d: Distribution): number {
   return d.n > 0 ? sum(d) / d.n : NaN;
 }
 
-export function min(d: Distribution): number { return d.min; }
-export function max(d: Distribution): number { return d.max; }
+export function min(d: Distribution): number {
+  return d.min;
+}
+export function max(d: Distribution): number {
+  return d.max;
+}
 export function range(d: Distribution): number {
   return d.size ? d.max - d.min : NaN;
 }
@@ -61,10 +65,15 @@ export function mad(d: Distribution): number {
   // Build sorted (deviation, weight) pairs, then walk the weighted lower-median directly.
   // (Deviations re-sort the domain, so we can't reuse d.cumulative; the inline walk avoids
   // allocating a second cumulative array over the deviations.)
-  const pairs = Array.from({ length: d.size }, (_, i) => [Math.abs(d.values[i]! - med), d.weights[i]!] as const)
-    .sort((a, b) => a[0] - b[0]);
-  let cum = 0; const target = d.n / 2;
-  for (const [dev, w] of pairs) { cum += w; if (cum >= target) return dev; }
+  const pairs = Array.from({ length: d.size }, (_, i) => [Math.abs(d.values[i]! - med), d.weights[i]!] as const).sort(
+    (a, b) => a[0] - b[0],
+  );
+  let cum = 0;
+  const target = d.n / 2;
+  for (const [dev, w] of pairs) {
+    cum += w;
+    if (cum >= target) return dev;
+  }
   return pairs.length ? pairs[pairs.length - 1]![0] : NaN;
 }
 

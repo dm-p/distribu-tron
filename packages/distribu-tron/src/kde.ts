@@ -45,13 +45,17 @@ function buildSamplePoints(min: number, max: number, resolution: number, clamp: 
   } else if (step > 0) {
     // Pad buffer steps onto each end so the kernel can taper to zero beyond the data range.
     const buffer = Math.floor(resolution / 2);
-    for (let i = 0; i < buffer; i++) { sample.unshift(sample[0]! - step); sample.push(sample[sample.length - 1]! + step); }
+    for (let i = 0; i < buffer; i++) {
+      sample.unshift(sample[0]! - step);
+      sample.push(sample[sample.length - 1]! + step);
+    }
   }
   return sample;
 }
 
 function density(d: Distribution, x: number, h: number): number {
-  const lo = lowerBound(d, x - h), hi = upperBound(d, x + h);
+  const lo = lowerBound(d, x - h),
+    hi = upperBound(d, x + h);
   let acc = 0;
   for (let i = lo; i < hi; i++) {
     const u = (x - d.values[i]!) / h;
@@ -62,13 +66,23 @@ function density(d: Distribution, x: number, h: number): number {
 }
 
 function lowerBound(d: Distribution, t: number): number {
-  let lo = 0, hi = d.size;
-  while (lo < hi) { const m = (lo + hi) >>> 1; if (d.values[m]! < t) lo = m + 1; else hi = m; }
+  let lo = 0,
+    hi = d.size;
+  while (lo < hi) {
+    const m = (lo + hi) >>> 1;
+    if (d.values[m]! < t) lo = m + 1;
+    else hi = m;
+  }
   return lo;
 }
 function upperBound(d: Distribution, t: number): number {
-  let lo = 0, hi = d.size;
-  while (lo < hi) { const m = (lo + hi) >>> 1; if (d.values[m]! <= t) lo = m + 1; else hi = m; }
+  let lo = 0,
+    hi = d.size;
+  while (lo < hi) {
+    const m = (lo + hi) >>> 1;
+    if (d.values[m]! <= t) lo = m + 1;
+    else hi = m;
+  }
   return lo;
 }
 function trimZeroTails(points: KdePoint[]): KdePoint[] {

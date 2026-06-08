@@ -20,7 +20,10 @@ describe("quantile (linear default reduces to type-7 for unit weights)", () => {
   });
   it("respects weights", () => {
     // value 1 weight 1, value 100 weight 99 → median pulled toward 100
-    const dw = distribution([{ value: 1, weight: 1 }, { value: 100, weight: 99 }]);
+    const dw = distribution([
+      { value: 1, weight: 1 },
+      { value: 100, weight: 99 },
+    ]);
     expect(quantile(dw, 0.5, { method: "lower" })).toBe(100);
   });
   it("nearest rounds half away from zero", () => {
@@ -31,7 +34,10 @@ describe("quantile (linear default reduces to type-7 for unit weights)", () => {
     const d2 = distribution([10, 20, 30, 40]);
     expect(quantile(d2, 0)).toBe(10);
     expect(quantile(d2, 1)).toBe(40);
-    const dw = distribution([{ value: 1, weight: 3 }, { value: 9, weight: 7 }]);
+    const dw = distribution([
+      { value: 1, weight: 3 },
+      { value: 9, weight: 7 },
+    ]);
     expect(quantile(dw, 0)).toBe(1);
     expect(quantile(dw, 1)).toBe(9);
   });
@@ -40,7 +46,10 @@ describe("quantile (linear default reduces to type-7 for unit weights)", () => {
   });
   it("linear default is weight-aware", () => {
     // n=100: value 1 weight 1, value 100 weight 99. median h=49.5 → both ranks land in heavy bucket → 100
-    const dw = distribution([{ value: 1, weight: 1 }, { value: 100, weight: 99 }]);
+    const dw = distribution([
+      { value: 1, weight: 1 },
+      { value: 100, weight: 99 },
+    ]);
     expect(quantile(dw, 0.5)).toBe(100);
     // p=0.005 → h=0.495 → vLo=valueAtRank(0)=1, vHi=valueAtRank(1)=100 → 1 + 0.495*99 ≈ 50.005
     expect(quantile(dw, 0.005)).toBeCloseTo(50.005, 6);
@@ -50,7 +59,10 @@ describe("quantile (linear default reduces to type-7 for unit weights)", () => {
     expect(quantile(empty, 0.5)).toBeNaN();
     expect(median(empty)).toBeNaN();
     const { q1, q2, q3, iqr } = quartiles(empty);
-    expect(q1).toBeNaN(); expect(q2).toBeNaN(); expect(q3).toBeNaN(); expect(iqr).toBeNaN();
+    expect(q1).toBeNaN();
+    expect(q2).toBeNaN();
+    expect(q3).toBeNaN();
+    expect(iqr).toBeNaN();
   });
   it("p outside [0,1] — including NaN — throws RangeError", () => {
     expect(() => quantile(d, 1.5)).toThrow(RangeError);
@@ -68,7 +80,10 @@ describe("percentileRank", () => {
     expect(percentileRank(d, 1)).toBeCloseTo(0.25, 12); // exact minimum value
   });
   it("is weight-aware", () => {
-    const dw = distribution([{ value: 1, weight: 3 }, { value: 10, weight: 7 }]); // n=10
+    const dw = distribution([
+      { value: 1, weight: 3 },
+      { value: 10, weight: 7 },
+    ]); // n=10
     expect(percentileRank(dw, 1)).toBeCloseTo(0.3, 12);
     expect(percentileRank(dw, 10)).toBe(1);
     expect(percentileRank(dw, 0)).toBe(0);

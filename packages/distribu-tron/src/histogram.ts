@@ -23,9 +23,10 @@ export const DEFAULT_MAX_AUTO_BINS = 50;
 export function histogram(d: Distribution, options: HistogramOptions = {}): Bin[] {
   if (d.size === 0) return [];
   if (d.min === d.max) return [{ x0: d.min, x1: d.max, weight: d.n }];
-  const boundaries = options.edges && options.edges.length >= 2
-    ? options.edges.slice().sort((a, b) => a - b)
-    : computeBoundaries(d, options);
+  const boundaries =
+    options.edges && options.edges.length >= 2
+      ? options.edges.slice().sort((a, b) => a - b)
+      : computeBoundaries(d, options);
   const bins: Bin[] = [];
   for (let i = 0; i < boundaries.length - 1; i++) bins.push({ x0: boundaries[i]!, x1: boundaries[i + 1]!, weight: 0 });
   if (bins.length === 0) return [{ x0: d.min, x1: d.max, weight: d.n }];
@@ -34,9 +35,10 @@ export function histogram(d: Distribution, options: HistogramOptions = {}): Bin[
 }
 
 function computeBoundaries(d: Distribution, options: HistogramOptions): number[] {
-  const target = options.binCount && options.binCount > 0
-    ? options.binCount
-    : autoBinCount(d, options.maxBins ?? DEFAULT_MAX_AUTO_BINS);
+  const target =
+    options.binCount && options.binCount > 0
+      ? options.binCount
+      : autoBinCount(d, options.maxBins ?? DEFAULT_MAX_AUTO_BINS);
   const step = niceStep((d.max - d.min) / target);
   if (!(step > 0)) return [d.min, d.max];
   const start = Math.floor(d.min / step) * step;

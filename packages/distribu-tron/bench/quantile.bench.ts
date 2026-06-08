@@ -9,8 +9,16 @@ const sorted = raw.slice().sort((a, b) => a - b);
 const d = distribution(raw);
 
 describe("quantile p50", () => {
-  bench("distribu-tron (prepared)", () => { quantile(d, 0.5); });
-  bench("distribu-tron (incl. prepare)", () => { quantile(distribution(raw), 0.5); });
-  bench("d3-array quantileSorted", () => { quantileSorted(sorted, 0.5); });
-  bench("simple-statistics quantile", () => { ssQuantile(raw, 0.5); });
+  bench("distribu-tron (prepared)", () => {
+    quantile(d, 0.5);
+  });
+  bench("distribu-tron (incl. prepare)", () => {
+    quantile(distribution(raw), 0.5);
+  });
+  bench("d3-array quantileSorted", () => {
+    quantileSorted(sorted, 0.5);
+  });
+  bench("simple-statistics quantile", () => {
+    ssQuantile(raw, 0.5);
+  });
 });

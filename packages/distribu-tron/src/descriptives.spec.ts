@@ -1,16 +1,35 @@
 import { describe, it, expect } from "vitest";
 import { distribution } from "./distribution";
-import { mean, sum, min, max, range, variance, stdev, mode, mad, skewness, kurtosis, weightedMedianSorted } from "./descriptives";
+import {
+  mean,
+  sum,
+  min,
+  max,
+  range,
+  variance,
+  stdev,
+  mode,
+  mad,
+  skewness,
+  kurtosis,
+  weightedMedianSorted,
+} from "./descriptives";
 
-const d = distribution([{ value: 1, weight: 3 }, { value: 2, weight: 2 }, { value: 3, weight: 1 }]);
+const d = distribution([
+  { value: 1, weight: 3 },
+  { value: 2, weight: 2 },
+  { value: 3, weight: 1 },
+]);
 
 describe("descriptives basics", () => {
   it("sum / mean over the weighted population", () => {
-    expect(sum(d)).toBe(10);            // 1*3 + 2*2 + 3*1
+    expect(sum(d)).toBe(10); // 1*3 + 2*2 + 3*1
     expect(mean(d)).toBeCloseTo(10 / 6, 12);
   });
   it("min / max / range", () => {
-    expect(min(d)).toBe(1); expect(max(d)).toBe(3); expect(range(d)).toBe(2);
+    expect(min(d)).toBe(1);
+    expect(max(d)).toBe(3);
+    expect(range(d)).toBe(2);
   });
   it("empty → NaN-ish", () => {
     const e = distribution([]);
@@ -22,19 +41,31 @@ describe("descriptives basics", () => {
 describe("variance / stdev", () => {
   it("population by default (÷n)", () => {
     // values 2,4,4,4,5,5,7,9 (n=8): population variance 4, stdev 2
-    const d = distribution([{ value: 2, weight: 1 }, { value: 4, weight: 3 }, { value: 5, weight: 2 }, { value: 7, weight: 1 }, { value: 9, weight: 1 }]);
+    const d = distribution([
+      { value: 2, weight: 1 },
+      { value: 4, weight: 3 },
+      { value: 5, weight: 2 },
+      { value: 7, weight: 1 },
+      { value: 9, weight: 1 },
+    ]);
     expect(variance(d)).toBeCloseTo(4, 10);
     expect(stdev(d)).toBeCloseTo(2, 10);
   });
   it("sample uses n-1", () => {
-    const d = distribution([{ value: 0, weight: 1 }, { value: 10, weight: 1 }]);
+    const d = distribution([
+      { value: 0, weight: 1 },
+      { value: 10, weight: 1 },
+    ]);
     expect(variance(d, { sample: true })).toBeCloseTo(50, 10); // ((0-5)^2+(10-5)^2)/(2-1)
   });
   it("degenerate → 0", () => {
     expect(stdev(distribution([{ value: 7, weight: 5 }]))).toBe(0);
   });
   it("zero observation mass (all-zero weights) → NaN, consistent with mean", () => {
-    const z = distribution([{ value: 1, weight: 0 }, { value: 2, weight: 0 }]);
+    const z = distribution([
+      { value: 1, weight: 0 },
+      { value: 2, weight: 0 },
+    ]);
     expect(Number.isNaN(mean(z))).toBe(true);
     expect(Number.isNaN(variance(z))).toBe(true);
     expect(Number.isNaN(stdev(z))).toBe(true);
@@ -51,7 +82,15 @@ describe("variance / stdev", () => {
 
 describe("mode/mad/skewness/kurtosis", () => {
   it("mode = max-weight value (ties → smallest)", () => {
-    expect(mode(distribution([{ value: 5, weight: 2 }, { value: 8, weight: 9 }, { value: 9, weight: 9 }]))).toBe(8);
+    expect(
+      mode(
+        distribution([
+          { value: 5, weight: 2 },
+          { value: 8, weight: 9 },
+          { value: 9, weight: 9 },
+        ]),
+      ),
+    ).toBe(8);
   });
   it("mad = weighted median of |x - median|", () => {
     // values 1,2,3,4,5 each weight 1: median 3, deviations 2,1,0,1,2 → median 1
@@ -64,7 +103,11 @@ describe("mode/mad/skewness/kurtosis", () => {
   });
   it("right-skewed data → positive skew (sign check)", () => {
     // mass piled at the low end, tail to the right
-    const d = distribution([{ value: 1, weight: 4 }, { value: 2, weight: 2 }, { value: 3, weight: 1 }]);
+    const d = distribution([
+      { value: 1, weight: 4 },
+      { value: 2, weight: 2 },
+      { value: 3, weight: 1 },
+    ]);
     expect(skewness(d)).toBeGreaterThan(0);
   });
   it("excess kurtosis of all-equal → 0 (degenerate)", () => {

@@ -8,6 +8,10 @@ const d = distribution(raw);
 const d3bin = bin();
 
 describe("histogram", () => {
-  bench("distribu-tron (prepared)", () => { histogram(d); });
-  bench("d3-array bin", () => { d3bin(raw); });
+  bench("distribu-tron (prepared)", () => {
+    histogram(d);
+  });
+  bench("d3-array bin", () => {
+    d3bin(raw);
+  });
 });

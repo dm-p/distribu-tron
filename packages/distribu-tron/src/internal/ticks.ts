@@ -11,13 +11,15 @@ function tickSpec(start: number, stop: number, count: number): [number, number, 
   let i1: number, i2: number, inc: number;
   if (power < 0) {
     inc = Math.pow(10, -power) / factor;
-    i1 = Math.round(start * inc); i2 = Math.round(stop * inc);
+    i1 = Math.round(start * inc);
+    i2 = Math.round(stop * inc);
     if (i1 / inc < start) ++i1;
     if (i2 / inc > stop) --i2;
     inc = -inc;
   } else {
     inc = Math.pow(10, power) * factor;
-    i1 = Math.round(start / inc); i2 = Math.round(stop / inc);
+    i1 = Math.round(start / inc);
+    i2 = Math.round(stop / inc);
     if (i1 * inc < start) ++i1;
     if (i2 * inc > stop) --i2;
   }
@@ -56,8 +58,13 @@ export function nice(start: number, stop: number, count: number): [number, numbe
   for (;;) {
     const step = tickIncrement(start, stop, count);
     if (step === prestep || step === 0 || !Number.isFinite(step)) return [start, stop];
-    if (step > 0) { start = Math.floor(start / step) * step; stop = Math.ceil(stop / step) * step; }
-    else { start = Math.ceil(start * step) / step; stop = Math.floor(stop * step) / step; }
+    if (step > 0) {
+      start = Math.floor(start / step) * step;
+      stop = Math.ceil(stop / step) * step;
+    } else {
+      start = Math.ceil(start * step) / step;
+      stop = Math.floor(stop * step) / step;
+    }
     prestep = step;
   }
 }
