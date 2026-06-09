@@ -26,7 +26,14 @@ const bars = computed(() =>
 const curve = computed(() => (props.kind === "kde" ? kdeCurve(kde(dist.value), geo) : null));
 const step = computed(() => (props.kind === "ecdf" ? ecdfStep(ecdf(dist.value), geo) : null));
 
-const inputText = computed(() => JSON.stringify(props.input, null, 0));
+const inputText = computed(() => {
+  const input = props.input;
+  if (!Array.isArray(input)) return JSON.stringify(input, null, 2);
+  const rows = (input as Array<number | { value: number; weight: number }>).map((item) =>
+    typeof item === "number" ? `  ${item},` : `  { value: ${item.value}, weight: ${item.weight} },`,
+  );
+  return `[\n${rows.join("\n")}\n]`;
+});
 const outLabel = computed(() =>
   props.kind === "histogram"
     ? `${bars.value?.rects.length ?? 0} bins · weights conserved`
@@ -40,7 +47,7 @@ const outLabel = computed(() =>
   <figure class="dt-io">
     <div class="dt-io-in">
       <div class="dt-io-head"><span class="dot" style="background:#ff5fcf"></span>input</div>
-      <pre><code>{{ inputText }}</code></pre>
+      <pre class="dt-io-src">{{ inputText }}</pre>
     </div>
     <figure class="dt-io-out">
       <div class="dt-io-head"><span class="dot" style="background:#5fe9ff"></span>output</div>
@@ -79,3 +86,19 @@ const outLabel = computed(() =>
     </figure>
   </figure>
 </template>
+
+<style scoped>
+/* The input panel renders a plain <pre> (not a VitePress code block), so give it
+   the same code-surface treatment and keep long inputs scrollable, not overflowing. */
+.dt-io-src {
+  margin: 0;
+  padding: 14px 16px;
+  font-family: var(--vp-font-family-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--vp-c-text-2);
+  white-space: pre;
+  overflow: auto;
+  max-height: 232px;
+}
+</style>
