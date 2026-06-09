@@ -1,0 +1,20 @@
+{
+  "name": "@distribu-tron/docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "distribu-tron": "workspace:*"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.3",
+    "vue": "^3.5.13",
+    "vitest": "^3.2.0"
+  }
+}

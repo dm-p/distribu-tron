@@ -4,9 +4,8 @@
    Crisp neon — NO blur effects (vestibular-safe). Light + dark palettes.
    ============================================================================ */
 
-/* Fonts. For best performance, prefer the <link> approach in .vitepress/config
-   head (see config-snippet.ts) and delete this @import. */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=Orbitron:wght@600;700;900&display=swap');
+/* Fonts are loaded via <link> tags in .vitepress/config.ts `head` (faster, with
+   preconnect). The former @import was removed to avoid a duplicate font request. */
 
 /* ---- type (shared) ---- */
 :root {
