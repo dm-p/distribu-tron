@@ -51,6 +51,7 @@ const outLabel = computed(() =>
     </div>
     <figure class="dt-io-out">
       <div class="dt-io-head"><span class="dot" style="background:#5fe9ff"></span>output</div>
+      <div class="dt-io-body">
       <svg class="dt-chart" :viewBox="`0 0 ${geo.width} ${geo.height}`" role="img"
            :aria-label="`${kind} of the input distribution`">
         <template v-if="hasData">
@@ -83,6 +84,7 @@ const outLabel = computed(() =>
         <text v-else :x="geo.width / 2" :y="geo.height / 2" text-anchor="middle">no data</text>
       </svg>
       <figcaption>{{ caption || outLabel }}</figcaption>
+      </div>
     </figure>
   </figure>
 </template>
@@ -100,5 +102,20 @@ const outLabel = computed(() =>
   white-space: pre;
   overflow: auto;
   max-height: 232px;
+}
+
+/* The vendored CSS pads .dt-io-out (header included), which pushes the OUTPUT
+   header down and inset vs the flush INPUT header. Make the output header flush
+   on both sides and move the padding to an inner body, so the two panel headers
+   line up. (Scoped specificity 0,4,0 beats the vendored .dt-io .dt-io-out.) */
+.dt-io .dt-io-out {
+  padding: 0;
+}
+.dt-io-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
 }
 </style>
