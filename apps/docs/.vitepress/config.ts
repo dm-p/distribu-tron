@@ -35,5 +35,52 @@ export default defineConfig({
     logo: "/logo.svg", // VitePress prefixes `base` for themeConfig assets automatically.
     siteTitle: "distribu-tron",
     socialLinks: [{ icon: "github", link: "https://github.com/dm-p/distribu-tron" }],
+    nav: [
+      { text: "Guide", link: "/guide/what-is-it" },
+      { text: "Reference", link: "/reference/" },
+      { text: "Roadmap", link: "/roadmap" },
+    ],
+    sidebar: {
+      "/guide/": [
+        {
+          text: "Introduction",
+          items: [
+            { text: "What is distribu-tron?", link: "/guide/what-is-it" },
+            { text: "Getting started", link: "/guide/getting-started" },
+            { text: "The model", link: "/guide/the-model" },
+          ],
+        },
+        {
+          text: "Statistics",
+          items: [
+            { text: "Descriptives", link: "/guide/descriptives" },
+            { text: "Quantiles & box plot", link: "/guide/quantiles" },
+            { text: "Shape & density", link: "/guide/shape-density" },
+          ],
+        },
+        {
+          text: "Grouping",
+          items: [
+            { text: "group() & ROLLUP", link: "/guide/grouping" },
+            { text: "summarize()", link: "/guide/summarize" },
+            { text: "Grouped plots", link: "/guide/grouped-plots" },
+          ],
+        },
+      ],
+      "/reference/": [
+        {
+          text: "Reference",
+          items: [
+            { text: "Overview", link: "/reference/" },
+            { text: "distribution()", link: "/reference/distribution" },
+            { text: "Descriptives", link: "/reference/descriptives" },
+            { text: "Quantiles & box plot", link: "/reference/quantiles-boxplot" },
+            { text: "Histogram, KDE & ECDF", link: "/reference/histogram-kde-ecdf" },
+            { text: "Grouping", link: "/reference/grouping" },
+            { text: "Utilities", link: "/reference/utilities" },
+          ],
+        },
+      ],
+    },
   },
 });
