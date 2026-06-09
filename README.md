@@ -2,6 +2,8 @@
 
 **Weighted, plot-ready distribution statistics from a frequency table.**
 
+📖 **Documentation:** https://dm-p.github.io/distribu-tron/
+
 Hand it a frequency table - the output of a database/engine `GROUP BY` (Power BI DAX, SQL,
 DuckDB), or just raw values - and get back plot-ready descriptives, quantiles, box plots,
 histograms, ECDFs, and kernel density estimates. Zero runtime dependencies, ESM-only,
