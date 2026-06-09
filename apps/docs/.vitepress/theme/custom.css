@@ -1,0 +1,220 @@
+/* ============================================================================
+   distribu-tron · VitePress theme  ("Neon Grid")
+   Drop this in .vitepress/theme/custom.css and import it from index.js.
+   Crisp neon — NO blur effects (vestibular-safe). Light + dark palettes.
+   ============================================================================ */
+
+/* Fonts. For best performance, prefer the <link> approach in .vitepress/config
+   head (see config-snippet.ts) and delete this @import. */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=Orbitron:wght@600;700;900&display=swap');
+
+/* ---- type (shared) ---- */
+:root {
+  --vp-font-family-base: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --vp-font-family-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+/* ============================================================================
+   LIGHT  (default :root)  — cool off-white, deepened cyan/magenta for contrast
+   ============================================================================ */
+:root {
+  --vp-c-bg:      #f7f9fe;
+  --vp-c-bg-alt:  #eceff8;
+  --vp-c-bg-soft: #eef2fb;
+  --vp-c-bg-elv:  #ffffff;
+  --vp-c-gutter:  #e3e8f4;
+
+  --vp-c-text-1:  #0c1326;
+  --vp-c-text-2:  #45546e;
+  --vp-c-text-3:  #6c7b97;
+
+  --vp-c-divider: rgba(20, 70, 140, 0.10);
+  --vp-c-border:  rgba(20, 70, 140, 0.17);
+
+  --vp-c-brand-1: #0c7c9c;   /* links / active / inline-code text (AA on white) */
+  --vp-c-brand-2: #0a6075;   /* hover */
+  --vp-c-brand-3: #1aa6cd;   /* fills */
+  --vp-c-brand-soft: rgba(14, 150, 196, 0.12);
+  --vp-c-brand:         var(--vp-c-brand-1);
+  --vp-c-brand-light:   var(--vp-c-brand-2);
+  --vp-c-brand-lighter: #1aa6cd;
+  --vp-c-brand-dark:    #0a6075;
+
+  --dt-magenta: #c81f93;
+  --dt-amber:   #a96a08;
+  --dt-grid:    rgba(20, 90, 170, 0.05);
+  --dt-c1:      #12a4cb;   /* chart series 1 */
+  --dt-c2:      #d1219b;   /* chart series 2 */
+
+  /* buttons — vivid cyan, near-black ink (same recipe both modes) */
+  --vp-button-brand-bg: #1bb4dd;
+  --vp-button-brand-text: #042029;
+  --vp-button-brand-border: transparent;
+  --vp-button-brand-hover-bg: #3ec6ea;
+  --vp-button-brand-hover-text: #042029;
+  --vp-button-brand-hover-border: transparent;
+  --vp-button-brand-active-bg: #12a4cb;
+  --vp-button-brand-active-text: #042029;
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(116deg, #0aa0cc 8%, #d1219b 92%);
+
+  --vp-code-block-bg: #eef2fb;
+  --vp-code-line-highlight-color: rgba(14, 150, 196, 0.10);
+  --vp-code-copy-code-bg: var(--vp-c-bg-elv);
+  --vp-code-copy-code-hover-bg: var(--vp-c-bg-soft);
+  --vp-code-tab-active-text-color: var(--vp-c-brand-1);
+  --vp-code-tab-active-bar-color: var(--vp-c-brand-1);
+
+  --vp-custom-block-tip-border: rgba(14, 150, 196, 0.45);
+  --vp-custom-block-tip-text: var(--vp-c-text-1);
+  --vp-custom-block-tip-bg: rgba(14, 150, 196, 0.08);
+  --vp-custom-block-tip-code-bg: rgba(0, 0, 0, 0.05);
+
+  --vp-custom-block-info-border: var(--vp-c-border);
+  --vp-custom-block-info-bg: var(--vp-c-bg-soft);
+
+  --vp-custom-block-warning-border: rgba(169, 106, 8, 0.45);
+  --vp-custom-block-warning-text: var(--vp-c-text-1);
+  --vp-custom-block-warning-bg: rgba(200, 130, 20, 0.10);
+
+  --vp-custom-block-danger-border: rgba(200, 31, 147, 0.45);
+  --vp-custom-block-danger-text: var(--vp-c-text-1);
+  --vp-custom-block-danger-bg: rgba(200, 31, 147, 0.08);
+}
+
+/* ============================================================================
+   DARK  (.dark)  — the neon-on-near-black signature
+   ============================================================================ */
+.dark {
+  --vp-c-bg:      #05060d;
+  --vp-c-bg-alt:  #090b16;
+  --vp-c-bg-soft: #0c1022;
+  --vp-c-bg-elv:  #11162c;
+  --vp-c-gutter:  #05060d;
+
+  --vp-c-text-1:  #e7eeff;
+  --vp-c-text-2:  #9db0d4;
+  --vp-c-text-3:  #61749a;
+
+  --vp-c-divider: rgba(120, 170, 255, 0.10);
+  --vp-c-border:  rgba(120, 170, 255, 0.18);
+
+  --vp-c-brand-1: #5fe9ff;
+  --vp-c-brand-2: #8af0ff;
+  --vp-c-brand-3: #5fe9ff;
+  --vp-c-brand-soft: rgba(95, 233, 255, 0.13);
+  --vp-c-brand-lighter: #a9f4ff;
+  --vp-c-brand-dark:    #38d6ff;
+
+  --dt-magenta: #ff5fcf;
+  --dt-amber:   #ffb86b;
+  --dt-grid:    rgba(95, 233, 255, 0.035);
+  --dt-c1:      #5fe9ff;
+  --dt-c2:      #ff5fcf;
+
+  --vp-button-brand-bg: #5fe9ff;
+  --vp-button-brand-text: #03121a;
+  --vp-button-brand-hover-bg: #8af0ff;
+  --vp-button-brand-hover-text: #03121a;
+  --vp-button-brand-active-bg: #38d6ff;
+  --vp-button-brand-active-text: #03121a;
+
+  --vp-home-hero-name-background: linear-gradient(116deg, #5fe9ff 12%, #ff5fcf 92%);
+
+  --vp-code-block-bg: #0c1022;
+  --vp-code-line-highlight-color: rgba(95, 233, 255, 0.08);
+
+  --vp-custom-block-tip-border: rgba(95, 233, 255, 0.5);
+  --vp-custom-block-tip-bg: rgba(95, 233, 255, 0.08);
+  --vp-custom-block-tip-code-bg: rgba(0, 0, 0, 0.25);
+
+  --vp-custom-block-warning-border: rgba(255, 184, 107, 0.5);
+  --vp-custom-block-warning-bg: rgba(255, 184, 107, 0.08);
+
+  --vp-custom-block-danger-border: rgba(255, 95, 207, 0.5);
+  --vp-custom-block-danger-bg: rgba(255, 95, 207, 0.08);
+}
+
+/* ============================================================================
+   Shared rules
+   ============================================================================ */
+
+/* wordmark: Orbitron for the site title + hero name ONLY (out of body copy) */
+.VPNavBarTitle .title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.VPHero .name .clip {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+.VPHero .tagline { color: var(--vp-c-text-2); }
+
+/* static neon grid backdrop (no motion, very low contrast) */
+.VPHome::before,
+.VPDoc::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--dt-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--dt-grid) 1px, transparent 1px);
+  background-size: 52px 52px;
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 0%, #000 0%, transparent 72%);
+          mask-image: radial-gradient(120% 90% at 50% 0%, #000 0%, transparent 72%);
+}
+.VPHome > *, .VPDoc > * { position: relative; z-index: 1; }
+
+.VPSidebarItem.is-active > .item .link .text { color: var(--vp-c-brand-1); }
+
+/* ============================================================================
+   Reusable doc components (use in markdown via raw HTML or a Vue component)
+   ============================================================================ */
+.dt-io {
+  margin: 26px 0;
+  border: 1px solid var(--vp-c-border);
+  border-radius: 14px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--vp-c-bg-soft);
+}
+.dt-io > * { min-width: 0; }
+.dt-io .dt-io-in { border-right: 1px solid var(--vp-c-divider); }
+.dt-io .dt-io-head {
+  font-family: var(--vp-font-family-mono);
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--vp-c-text-3);
+  padding: 9px 16px;
+  background: var(--vp-c-bg-alt);
+  border-bottom: 1px solid var(--vp-c-divider);
+  display: flex; align-items: center; gap: 8px;
+}
+.dt-io .dt-io-head .dot { width: 6px; height: 6px; border-radius: 50%; }
+.dt-io .dt-io-in :where(div[class*="language-"]) { margin: 0; border-radius: 0; }
+.dt-io .dt-io-out { padding: 16px; display: flex; flex-direction: column; }
+.dt-io figcaption {
+  font-size: 12.5px; color: var(--vp-c-text-3);
+  margin-top: 10px; font-family: var(--vp-font-family-mono);
+}
+.dt-io figcaption b { color: var(--vp-c-brand-1); font-weight: 500; }
+
+@media (max-width: 720px) {
+  .dt-io { grid-template-columns: 1fr; }
+  .dt-io .dt-io-in { border-right: 0; border-bottom: 1px solid var(--vp-c-divider); }
+}
+
+/* chart primitives — fills read --dt-c1 / --dt-c2 so they recolor per theme */
+.dt-chart { width: 100%; }
+.dt-chart text { font-family: var(--vp-font-family-mono); fill: var(--vp-c-text-3); font-size: 8px; }
+.dt-chart .axis { stroke: var(--vp-c-divider); stroke-width: 1; }
+.dt-legend {
+  display: flex; gap: 16px; margin-top: 6px;
+  font-family: var(--vp-font-family-mono); font-size: 11px; color: var(--vp-c-text-3);
+}
+.dt-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }

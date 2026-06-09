@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>distribu-tron · VitePress theme preview</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=Orbitron:wght@600;700;900&display=swap');
+
+/* ============================================================
+   DESIGN TOKENS  ·  mirror of theme/custom.css
+   (in real VitePress these map onto --vp-* variables)
+   ============================================================ */
+:root {
+  --dt-bg:        #05060d;
+  --dt-bg-alt:    #090b16;
+  --dt-bg-soft:   #0c1022;
+  --dt-bg-elv:    #11162c;
+  --dt-text-1:    #e7eeff;
+  --dt-text-2:    #9db0d4;
+  --dt-text-3:    #61749a;
+  --dt-divider:   rgba(120,170,255,0.10);
+  --dt-border:    rgba(120,170,255,0.18);
+  --dt-cyan:      #5fe9ff;
+  --dt-cyan-2:    #38d6ff;
+  --dt-cyan-dim:  rgba(95,233,255,0.13);
+  --dt-magenta:   #ff5fcf;
+  --dt-magenta-dim: rgba(255,95,207,0.13);
+  --dt-amber:     #ffb86b;
+  --dt-amber-dim: rgba(255,184,107,0.12);
+  --dt-grid:      rgba(95,233,255,0.035);
+  --dt-c1:        #5fe9ff;   /* chart series 1 */
+  --dt-c2:        #ff5fcf;   /* chart series 2 */
+  /* code tokens */
+  --tok-key: #ff5fcf; --tok-fn: #5fe9ff; --tok-str: #ffb86b;
+  --tok-num: #7fd6ff; --tok-com: #61749a; --tok-prop: #9db0d4; --tok-punc: #61749a;
+  --dt-nav-h:     64px;
+  --dt-sidebar-w: 256px;
+  --dt-aside-w:   224px;
+  --dt-content-w: 760px;
+
+  --font-body: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+  --font-display: 'Orbitron', sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--dt-bg); color: var(--dt-text-1);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+/* static, low-contrast grid — no motion, no blur (accessible) */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--dt-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--dt-grid) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(120% 90% at 50% 0%, #000 0%, transparent 72%);
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 0%, #000 0%, transparent 72%);
+}
+a { color: var(--dt-cyan); text-decoration: none; }
+a:hover { color: var(--dt-cyan-2); }
+::selection { background: var(--dt-magenta-dim); }
+
+/* ---- LIGHT palette (mirror of custom.css :root) ---- */
+body[data-theme="light"] {
+  --dt-bg:        #f7f9fe;
+  --dt-bg-alt:    #eceff8;
+  --dt-bg-soft:   #eef2fb;
+  --dt-bg-elv:    #ffffff;
+  --dt-text-1:    #0c1326;
+  --dt-text-2:    #45546e;
+  --dt-text-3:    #6c7b97;
+  --dt-divider:   rgba(20,70,140,0.10);
+  --dt-border:    rgba(20,70,140,0.17);
+  --dt-cyan:      #0c7c9c;
+  --dt-cyan-2:    #0a6075;
+  --dt-cyan-dim:  rgba(14,150,196,0.12);
+  --dt-magenta:   #c81f93;
+  --dt-magenta-dim: rgba(200,31,147,0.10);
+  --dt-amber:     #a96a08;
+  --dt-amber-dim: rgba(200,130,20,0.12);
+  --dt-grid:      rgba(20,90,170,0.05);
+  --dt-c1:        #12a4cb;
+  --dt-c2:        #d1219b;
+  --tok-key: #c81f93; --tok-fn: #0c7c9c; --tok-str: #b5730a;
+  --tok-num: #1d6fa8; --tok-com: #6c7b97; --tok-prop: #45546e; --tok-punc: #6c7b97;
+}
+
+/* ============================================================
+   NAVBAR (.VPNav)
+   ============================================================ */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--dt-nav-h); z-index: 50;
+  display: flex; align-items: center; gap: 18px;
+  padding: 0 24px;
+  background: color-mix(in srgb, var(--dt-bg-alt) 92%, transparent);
+  border-bottom: 1px solid var(--dt-divider);
+}
+.brand { display: flex; align-items: center; gap: 10px; margin-right: 6px; }
+.brand svg { width: 27px; height: 27px; display: block; }
+.brand .title {
+  font-family: var(--font-display); font-weight: 700; font-size: 17px;
+  letter-spacing: 0.02em; color: var(--dt-cyan);
+}
+.brand .title b { color: var(--dt-magenta); font-weight: 700; }
+.nav-links { display: flex; align-items: center; gap: 4px; }
+.nav-link {
+  font-size: 14px; font-weight: 500; color: var(--dt-text-2);
+  padding: 6px 12px; border-radius: 8px; cursor: pointer; background: none; border: none;
+  font-family: var(--font-body);
+}
+.nav-link:hover { color: var(--dt-text-1); background: var(--dt-bg-soft); }
+.nav-link.active { color: var(--dt-cyan); }
+.nav-spacer { flex: 1; }
+.nav-tools { display: flex; align-items: center; gap: 10px; }
+.search {
+  display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px;
+  border: 1px solid var(--dt-border); border-radius: 9px; background: var(--dt-bg-soft);
+  color: var(--dt-text-3); font-size: 13px; cursor: pointer; font-family: var(--font-body);
+}
+.search:hover { border-color: var(--dt-cyan); color: var(--dt-text-2); }
+.search kbd {
+  font-family: var(--font-mono); font-size: 11px; padding: 1px 5px;
+  border: 1px solid var(--dt-border); border-radius: 5px; color: var(--dt-text-3);
+}
+.icon-btn {
+  width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px;
+  color: var(--dt-text-2); cursor: pointer; border: 1px solid transparent; background: none;
+}
+.icon-btn:hover { color: var(--dt-cyan); background: var(--dt-bg-soft); }
+.nav-divider { width: 1px; height: 24px; background: var(--dt-divider); }
+
+/* ============================================================
+   HOME (.VPHome)
+   ============================================================ */
+.view { display: none; }
+body[data-view="home"] .view-home { display: block; }
+body[data-view="guide"] .view-guide { display: block; }
+
+.home { position: relative; z-index: 1; padding-top: var(--dt-nav-h); }
+.hero {
+  max-width: 1120px; margin: 0 auto; padding: 72px 32px 40px;
+  display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center;
+}
+.hero .eyebrow {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--dt-cyan); margin-bottom: 18px;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.hero .eyebrow::before { content: ""; width: 22px; height: 1px; background: var(--dt-cyan); }
+.hero .name {
+  font-family: var(--font-display); font-weight: 900; font-size: 56px; line-height: 1.02;
+  letter-spacing: 0.01em; margin: 0 0 4px;
+  background: linear-gradient(116deg, var(--dt-cyan) 12%, var(--dt-magenta) 92%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hero .lede { font-size: 20px; color: var(--dt-text-1); font-weight: 500; margin: 18px 0 8px; max-width: 30ch; }
+.hero .sub { font-size: 16px; color: var(--dt-text-2); margin: 0 0 30px; max-width: 42ch; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 22px;
+  border-radius: 11px; font-size: 14px; font-weight: 600; cursor: pointer;
+  font-family: var(--font-body); border: 1px solid transparent; transition: background .15s, border-color .15s;
+}
+.btn-brand { background: var(--dt-c1); color: #03121a; }
+.btn-brand:hover { filter: brightness(1.12); }
+.btn-alt { background: transparent; color: var(--dt-text-1); border-color: var(--dt-border); }
+.btn-alt:hover { border-color: var(--dt-cyan); color: var(--dt-cyan); }
+
+/* code window (hero) */
+.codewin {
+  border: 1px solid var(--dt-border); border-radius: 14px; overflow: hidden;
+  background: var(--dt-bg-soft); box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+}
+.codewin .bar {
+  display: flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px;
+  background: var(--dt-bg-alt); border-bottom: 1px solid var(--dt-divider);
+}
+.codewin .bar i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+.codewin .bar .fn { margin-left: 8px; font-family: var(--font-mono); font-size: 12px; color: var(--dt-text-3); }
+pre {
+  margin: 0; padding: 18px 20px; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 13.5px; line-height: 1.75; color: var(--dt-text-1);
+}
+pre code { font-family: inherit; }
+.tok-key  { color: var(--tok-key); }
+.tok-fn   { color: var(--tok-fn); }
+.tok-str  { color: var(--tok-str); }
+.tok-num  { color: var(--tok-num); }
+.tok-com  { color: var(--tok-com); font-style: italic; }
+.tok-prop { color: var(--tok-prop); }
+.tok-punc { color: var(--tok-punc); }
+
+/* features */
+.features {
+  max-width: 1120px; margin: 0 auto; padding: 36px 32px 96px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+}
+.feature {
+  background: var(--dt-bg-soft); border: 1px solid var(--dt-divider); border-radius: 14px;
+  padding: 24px; transition: border-color .15s, transform .15s;
+}
+.feature:hover { border-color: var(--dt-border); transform: translateY(-2px); }
+.feature .ficon {
+  width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center;
+  background: var(--dt-cyan-dim); margin-bottom: 16px;
+}
+.feature h3 { margin: 0 0 7px; font-size: 16px; font-weight: 600; color: var(--dt-text-1); }
+.feature p { margin: 0; font-size: 14px; color: var(--dt-text-2); line-height: 1.6; }
+.feature .ficon .barmini { display: flex; align-items: flex-end; gap: 2.5px; height: 18px; }
+.feature .ficon .barmini i { width: 3px; border-radius: 1px; }
+
+/* ============================================================
+   GUIDE LAYOUT (.VPDoc + sidebar + aside)
+   ============================================================ */
+.guide { position: relative; z-index: 1; padding-top: var(--dt-nav-h); display: flex; }
+.sidebar {
+  position: fixed; top: var(--dt-nav-h); bottom: 0; left: 0; width: var(--dt-sidebar-w);
+  overflow-y: auto; padding: 28px 16px 40px 28px;
+  border-right: 1px solid var(--dt-divider); background: var(--dt-bg-alt);
+}
+.sb-group { margin-bottom: 26px; }
+.sb-title { font-size: 13px; font-weight: 700; color: var(--dt-text-1); margin-bottom: 10px; letter-spacing: 0.01em; }
+.sb-item {
+  display: block; font-size: 13.5px; color: var(--dt-text-2); padding: 6px 12px;
+  border-radius: 7px; margin: 1px 0; cursor: pointer; border-left: 2px solid transparent;
+}
+.sb-item:hover { color: var(--dt-text-1); }
+.sb-item.active {
+  color: var(--dt-cyan); background: var(--dt-cyan-dim);
+  border-left-color: var(--dt-cyan); font-weight: 500;
+}
+
+.docwrap { margin-left: var(--dt-sidebar-w); flex: 1; display: flex; justify-content: center; }
+.doc {
+  width: 100%; max-width: var(--dt-content-w); padding: 44px 48px 80px; min-width: 0;
+}
+.doc h1 {
+  font-size: 33px; font-weight: 700; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.01em;
+  color: var(--dt-text-1);
+}
+.doc .h1-sub { font-size: 17px; color: var(--dt-text-2); margin: 0 0 30px; }
+.doc h2 {
+  font-size: 23px; font-weight: 600; margin: 46px 0 16px; padding-top: 22px;
+  border-top: 1px solid var(--dt-divider); color: var(--dt-text-1);
+  display: flex; align-items: baseline; gap: 10px;
+}
+.doc h2 .anchor { font-family: var(--font-mono); color: var(--dt-text-3); font-size: 16px; opacity: 0; }
+.doc h2:hover .anchor { opacity: 1; }
+.doc h2 code { font-family: var(--font-mono); font-size: 0.86em; color: var(--dt-cyan); background: none; padding: 0; }
+.doc p { margin: 16px 0; color: var(--dt-text-2); }
+.doc p strong { color: var(--dt-text-1); font-weight: 600; }
+.doc :not(pre) > code {
+  font-family: var(--font-mono); font-size: 0.86em; padding: 2px 6px; border-radius: 5px;
+  background: var(--dt-bg-elv); color: var(--dt-cyan); border: 1px solid var(--dt-divider);
+}
+.doc ul { color: var(--dt-text-2); padding-left: 22px; }
+.doc li { margin: 7px 0; }
+
+/* doc code block */
+.codeblock {
+  margin: 22px 0; border: 1px solid var(--dt-border); border-radius: 12px; overflow: hidden;
+  background: var(--dt-bg-soft);
+}
+.codeblock .lang {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; background: var(--dt-bg-alt); border-bottom: 1px solid var(--dt-divider);
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--dt-text-3);
+}
+.codeblock .lang .copy { cursor: pointer; }
+.codeblock .lang .copy:hover { color: var(--dt-cyan); }
+
+/* custom containers */
+.callout {
+  margin: 22px 0; padding: 16px 18px; border-radius: 10px; border: 1px solid;
+  border-left-width: 3px; font-size: 14.5px;
+}
+.callout .ctitle { font-weight: 700; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 6px; }
+.callout p { margin: 0; }
+.callout.tip { background: var(--dt-cyan-dim); border-color: var(--dt-cyan); color: var(--dt-text-1); }
+.callout.tip .ctitle { color: var(--dt-cyan); }
+.callout.warn { background: var(--dt-amber-dim); border-color: var(--dt-amber); color: var(--dt-text-1); }
+.callout.warn .ctitle { color: var(--dt-amber); }
+.callout.danger { background: var(--dt-magenta-dim); border-color: var(--dt-magenta); color: var(--dt-text-1); }
+.callout.danger .ctitle { color: var(--dt-magenta); }
+.callout code { background: rgba(0,0,0,0.25) !important; border-color: transparent !important; }
+
+/* input → output figure (the signature doc component) */
+.io {
+  margin: 26px 0; border: 1px solid var(--dt-border); border-radius: 14px; overflow: hidden;
+  display: grid; grid-template-columns: 1fr 1fr; background: var(--dt-bg-soft);
+}
+.io .io-in { border-right: 1px solid var(--dt-divider); }
+.io > * { min-width: 0; }
+.io .io-head {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--dt-text-3); padding: 9px 16px; background: var(--dt-bg-alt);
+  border-bottom: 1px solid var(--dt-divider); display: flex; align-items: center; gap: 8px;
+}
+.io .io-head .dot { width: 6px; height: 6px; border-radius: 50%; }
+.io .io-in pre { font-size: 12.5px; }
+.io .io-out { padding: 16px; display: flex; flex-direction: column; }
+.io figcaption {
+  font-size: 12.5px; color: var(--dt-text-3); margin-top: 10px; font-family: var(--font-mono);
+}
+.io figcaption b { color: var(--dt-cyan); font-weight: 500; }
+
+/* tables */
+.doc table { width: 100%; border-collapse: collapse; margin: 22px 0; font-size: 14px; }
+.doc th, .doc td { text-align: left; padding: 10px 14px; border: 1px solid var(--dt-divider); }
+.doc th { background: var(--dt-bg-alt); color: var(--dt-text-1); font-weight: 600; }
+.doc td { color: var(--dt-text-2); }
+.doc td code, .doc th code { background: var(--dt-bg-elv); }
+
+/* pager */
+.pager {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 56px;
+  padding-top: 28px; border-top: 1px solid var(--dt-divider);
+}
+.pager a {
+  border: 1px solid var(--dt-border); border-radius: 12px; padding: 14px 18px; display: block;
+  transition: border-color .15s;
+}
+.pager a:hover { border-color: var(--dt-cyan); }
+.pager .dir { font-size: 12px; color: var(--dt-text-3); margin-bottom: 4px; }
+.pager .ttl { font-size: 15px; color: var(--dt-cyan); font-weight: 500; }
+.pager .next { text-align: right; }
+
+/* aside */
+.aside {
+  position: sticky; top: var(--dt-nav-h); align-self: flex-start;
+  width: var(--dt-aside-w); padding: 44px 28px; flex-shrink: 0;
+}
+.aside .ao-title {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--dt-text-1); margin-bottom: 12px;
+}
+.aside .ao-item {
+  display: block; font-size: 13px; color: var(--dt-text-3); padding: 5px 0 5px 12px;
+  border-left: 1px solid var(--dt-divider); cursor: pointer;
+}
+.aside .ao-item:hover { color: var(--dt-text-1); }
+.aside .ao-item.active { color: var(--dt-cyan); border-left-color: var(--dt-cyan); }
+.aside .ao-item.sub { padding-left: 24px; }
+
+/* charts */
+.chart { width: 100%; }
+.chart text { font-family: var(--font-mono); fill: var(--dt-text-3); font-size: 8px; }
+.axis { stroke: var(--dt-divider); stroke-width: 1; }
+.legend { display: flex; gap: 16px; margin-top: 6px; font-family: var(--font-mono); font-size: 11px; color: var(--dt-text-3); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+
+.preview-note {
+  position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 60;
+  font-family: var(--font-mono); font-size: 11px; color: var(--dt-text-3);
+  background: var(--dt-bg-alt); border: 1px solid var(--dt-divider); border-radius: 999px;
+  padding: 6px 16px; letter-spacing: 0.04em;
+}
+
+@media (max-width: 980px) {
+  .hero { grid-template-columns: 1fr; gap: 28px; }
+  .features { grid-template-columns: 1fr; }
+  .sidebar, .aside { display: none; }
+  .docwrap { margin-left: 0; }
+}
+</style>
+</head>
+<body data-view="home" data-theme="dark">
+
+<!-- ===================== NAV ===================== -->
+<nav class="nav">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" fill="none">
+      <rect x="15.1" y="3.6" width="1.8" height="3.8" rx="0.6" fill="#5fe9ff"/>
+      <circle cx="16" cy="2.7" r="1.8" fill="#ff5fcf"/>
+      <rect x="4" y="6.4" width="24" height="22.4" rx="5.2" fill="#0a0e1c" stroke="#5fe9ff" stroke-width="1.6"/>
+      <rect x="7" y="9.2" width="18" height="11" rx="2.6" fill="#05070f" stroke="#5fe9ff" stroke-opacity="0.32" stroke-width="1"/>
+      <rect x="8.4"  y="14.9" width="2" height="3.5" rx="0.4" fill="#5fe9ff"/>
+      <rect x="11.8" y="12.4" width="2" height="6.0" rx="0.4" fill="#ff5fcf"/>
+      <rect x="15.2" y="10.4" width="2" height="8.0" rx="0.4" fill="#5fe9ff"/>
+      <rect x="18.6" y="12.9" width="2" height="5.5" rx="0.4" fill="#ff5fcf"/>
+      <rect x="22.0" y="14.9" width="2" height="3.5" rx="0.4" fill="#5fe9ff"/>
+      <rect x="10.8" y="22.4" width="1.6" height="3.2" rx="0.5" fill="#5fe9ff"/>
+      <rect x="13.8" y="22.4" width="1.6" height="3.2" rx="0.5" fill="#5fe9ff"/>
+      <rect x="16.8" y="22.4" width="1.6" height="3.2" rx="0.5" fill="#5fe9ff"/>
+      <rect x="19.8" y="22.4" width="1.6" height="3.2" rx="0.5" fill="#5fe9ff"/>
+    </svg>
+    <span class="title">distribu<b>-tron</b></span>
+  </div>
+  <div class="nav-links">
+    <button class="nav-link" data-go="home">Home</button>
+    <button class="nav-link" data-go="guide">Guide</button>
+    <button class="nav-link" data-go="guide">Reference</button>
+    <button class="nav-link" data-go="home">Roadmap</button>
+  </div>
+  <div class="nav-spacer"></div>
+  <div class="nav-tools">
+    <div class="search"><span>Search</span><kbd>⌘K</kbd></div>
+    <div class="nav-divider"></div>
+    <button class="icon-btn" id="theme-toggle" title="Toggle light / dark" aria-label="Toggle theme">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+    <button class="icon-btn" title="GitHub" aria-label="GitHub">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.6 2 12.3c0 4.5 2.9 8.3 6.8 9.7.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.4-3.4-1.4-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .8.1-.7.4-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.3 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5 3.9-1.4 6.8-5.2 6.8-9.7C22 6.6 17.5 2 12 2z"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ===================== HOME ===================== -->
+<main class="view view-home home" data-screen-label="Home">
+  <section class="hero">
+    <div>
+      <span class="eyebrow">npm i distribu-tron</span>
+      <h1 class="name">DISTRIBU<br>-TRON</h1>
+      <p class="lede">Weighted, plot-ready distribution statistics from a frequency table.</p>
+      <p class="sub">Hand it the output of a <code>GROUP BY</code> and read median, quantiles, histograms, box plots, ECDFs and KDEs straight off it. Zero runtime deps, ESM-only, TypeScript-first.</p>
+      <div class="actions">
+        <button class="btn btn-brand" data-go="guide">Get Started →</button>
+        <button class="btn btn-alt" data-go="guide">Why distribu-tron?</button>
+      </div>
+    </div>
+    <div class="codewin">
+      <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="fn">quickstart.ts</span></div>
+      <pre><code><span class="tok-key">import</span> { <span class="tok-fn">distribution</span>, <span class="tok-fn">summary</span>, <span class="tok-fn">quantile</span> } <span class="tok-key">from</span> <span class="tok-str">"distribu-tron"</span>;
+
+<span class="tok-com">// a frequency table — { value, weight }</span>
+<span class="tok-key">const</span> d <span class="tok-punc">=</span> <span class="tok-fn">distribution</span>([
+  { <span class="tok-prop">value</span>: <span class="tok-num">10</span>, <span class="tok-prop">weight</span>: <span class="tok-num">1203</span> },
+  { <span class="tok-prop">value</span>: <span class="tok-num">20</span>, <span class="tok-prop">weight</span>: <span class="tok-num">2310</span> },
+  { <span class="tok-prop">value</span>: <span class="tok-num">24</span>, <span class="tok-prop">weight</span>: <span class="tok-num">145</span> },
+]);
+
+<span class="tok-fn">quantile</span>(d, <span class="tok-num">0.5</span>);   <span class="tok-com">// → 20  (weighted median)</span>
+<span class="tok-fn">summary</span>(d);         <span class="tok-com">// { n, mean, stdev, … }</span></code></pre>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="feature">
+      <div class="ficon"><div class="barmini"><i style="height:7px;background:var(--dt-cyan)"></i><i style="height:12px;background:var(--dt-magenta)"></i><i style="height:18px;background:var(--dt-cyan)"></i><i style="height:11px;background:var(--dt-magenta)"></i><i style="height:6px;background:var(--dt-cyan)"></i></div></div>
+      <h3>Weighted by design</h3>
+      <p>Every input is a <code>{ value, weight }</code> table. Integer counts or fractional importance — no re-exploding into raw arrays.</p>
+    </div>
+    <div class="feature">
+      <div class="ficon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--dt-cyan)" stroke-width="2"><path d="M3 17c3-7 6 4 9-3s6 1 9-6"/></svg></div>
+      <h3>Plot-ready arrays</h3>
+      <p>Histograms, ECDFs and KDEs come out as plain arrays that feed straight into any charting grammar. No charting dep baked in.</p>
+    </div>
+    <div class="feature">
+      <div class="ficon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--dt-cyan)" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+      <h3>~425× faster on tables</h3>
+      <p>Reads aggregated input directly. A p50 from a 1,000-row table runs ~425× faster than expand-then-quantile.</p>
+    </div>
+    <div class="feature">
+      <div class="ficon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--dt-cyan)" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="8" y="14" width="7" height="7" rx="1"/></svg></div>
+      <h3>ROLLUP grouping</h3>
+      <p><code>group()</code> builds one distribution per key with hierarchical subtotals and a grand total — like SQL <code>WITH ROLLUP</code>.</p>
+    </div>
+    <div class="feature">
+      <div class="ficon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--dt-cyan)" stroke-width="2"><path d="M5 3v18M5 12h7M5 6h11M5 18h9"/></svg></div>
+      <h3>Numerically stable</h3>
+      <p>Neumaier compensated summation keeps results honest at very large <code>n</code>, where naive accumulation quietly drifts.</p>
+    </div>
+    <div class="feature">
+      <div class="ficon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--dt-cyan)" stroke-width="2"><path d="M4 7l8-4 8 4-8 4-8-4z"/><path d="M4 12l8 4 8-4M4 17l8 4 8-4"/></svg></div>
+      <h3>Zero deps, ESM, typed</h3>
+      <p>No runtime dependencies, <code>import</code>-only, TypeScript-first. Node ≥ 22. Tree-shakable free functions throughout.</p>
+    </div>
+  </section>
+</main>
+
+<!-- ===================== GUIDE ===================== -->
+<div class="view view-guide guide" data-screen-label="Guide">
+  <aside class="sidebar">
+    <div class="sb-group">
+      <div class="sb-title">Introduction</div>
+      <div class="sb-item" data-jump="">What is distribu-tron?</div>
+      <div class="sb-item" data-jump="">Getting started</div>
+      <div class="sb-item" data-jump="">The model</div>
+    </div>
+    <div class="sb-group">
+      <div class="sb-title">Statistics</div>
+      <div class="sb-item" data-jump="">Descriptives</div>
+      <div class="sb-item" data-jump="">Quantiles &amp; box plot</div>
+      <div class="sb-item active">Shape &amp; density</div>
+    </div>
+    <div class="sb-group">
+      <div class="sb-title">Grouping</div>
+      <div class="sb-item" data-jump="">group() &amp; ROLLUP</div>
+      <div class="sb-item" data-jump="">summarize()</div>
+      <div class="sb-item" data-jump="">Grouped plots</div>
+    </div>
+  </aside>
+
+  <div class="docwrap">
+    <article class="doc">
+      <h1>Shape &amp; density</h1>
+      <p class="h1-sub">Turn a prepared <code>Distribution</code> into plot-ready arrays — histograms, ECDFs and kernel density estimates.</p>
+
+      <div class="callout tip">
+        <div class="ctitle">Prepare once, read many</div>
+        <p>Build a <code>Distribution</code> with <code>distribution()</code>, then call these free functions against the same substrate. They never re-sort or re-aggregate.</p>
+      </div>
+
+      <h2 id="histogram"><code>histogram(d)</code><span class="anchor">#</span></h2>
+      <p>A capped Freedman–Diaconis <strong>histogram</strong> with auto-bins. Weights are conserved per bin, and you can pass explicit <code>edges</code>. Each bin is <code>{ x0, x1, weight }</code> — ready to render as bars.</p>
+
+      <figure class="io">
+        <div class="io-in">
+          <div class="io-head"><span class="dot" style="background:var(--dt-magenta)"></span>input</div>
+          <pre><code><span class="tok-key">const</span> bins <span class="tok-punc">=</span> <span class="tok-fn">histogram</span>(d);
+<span class="tok-com">// [</span>
+<span class="tok-com">//  { x0: 0,  x1: 4,  weight: 31 },</span>
+<span class="tok-com">//  { x0: 4,  x1: 8,  weight: 52 },</span>
+<span class="tok-com">//  … auto Freedman–Diaconis bins</span>
+<span class="tok-com">// ]</span></code></pre>
+        </div>
+        <figure class="io-out">
+          <div class="io-head" style="background:none;border:0;padding:0 0 8px"><span class="dot" style="background:var(--dt-cyan)"></span>output</div>
+          <svg class="chart" id="chart-hist" viewBox="0 0 320 170" preserveAspectRatio="xMidYMid meet"></svg>
+          <figcaption>11 bins · <b>weights conserved</b></figcaption>
+        </figure>
+      </figure>
+
+      <h2 id="kde"><code>kde(d)</code><span class="anchor">#</span></h2>
+      <p>A windowed <strong>Epanechnikov</strong> kernel density estimate with Silverman bandwidth (override via <code>silvermanBandwidth</code>). Returns <code>{ x, density }</code> sample points that overlay cleanly on the histogram.</p>
+
+      <figure class="io">
+        <div class="io-in">
+          <div class="io-head"><span class="dot" style="background:var(--dt-magenta)"></span>input</div>
+          <pre><code><span class="tok-key">const</span> h <span class="tok-punc">=</span> <span class="tok-fn">silvermanBandwidth</span>(d);
+<span class="tok-key">const</span> curve <span class="tok-punc">=</span> <span class="tok-fn">kde</span>(d, { <span class="tok-prop">bandwidth</span>: h });
+<span class="tok-com">// [</span>
+<span class="tok-com">//  { x: 0.0, density: 0.004 },</span>
+<span class="tok-com">//  { x: 1.2, density: 0.011 },</span>
+<span class="tok-com">//  …</span>
+<span class="tok-com">// ]</span></code></pre>
+        </div>
+        <figure class="io-out">
+          <div class="io-head" style="background:none;border:0;padding:0 0 8px"><span class="dot" style="background:var(--dt-cyan)"></span>output</div>
+          <svg class="chart" id="chart-kde" viewBox="0 0 320 170" preserveAspectRatio="xMidYMid meet"></svg>
+          <div class="legend"><span><i style="background:var(--dt-cyan)"></i>histogram</span><span><i style="background:var(--dt-magenta)"></i>kde</span></div>
+        </figure>
+      </figure>
+
+      <h2 id="methods"><code>ecdf(d)</code> &amp; methods<span class="anchor">#</span></h2>
+      <p>The full shape-and-density surface. All functions read the same cumulative-weight substrate.</p>
+      <table>
+        <thead><tr><th>Function</th><th>Returns</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><code>histogram(d)</code></td><td><code>{ x0, x1, weight }[]</code></td><td>Capped FD bins; explicit <code>edges</code> supported</td></tr>
+          <tr><td><code>kde(d, opts)</code></td><td><code>{ x, density }[]</code></td><td>Epanechnikov · Silverman bandwidth</td></tr>
+          <tr><td><code>ecdf(d)</code></td><td><code>{ x, p }[]</code></td><td>Empirical CDF as a step series</td></tr>
+          <tr><td><code>cdf(d, x)</code></td><td><code>number</code></td><td>Weighted CDF at a point</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warn">
+        <div class="ctitle">Reserved field names</div>
+        <p>Grouped helpers flatten the group key onto each row — don't name a grouping dimension after an output field (<code>weight</code>, <code>x</code>, <code>density</code>, <code>n</code>, <code>min</code>, <code>max</code>, <code>median</code>, <code>depth</code>). The key would overwrite it.</p>
+      </div>
+
+      <div class="pager">
+        <a class="prev"><div class="dir">← Previous</div><div class="ttl">Quantiles &amp; box plot</div></a>
+        <a class="next"><div class="dir">Next →</div><div class="ttl">group() &amp; ROLLUP</div></a>
+      </div>
+    </article>
+
+    <aside class="aside">
+      <div class="ao-title">On this page</div>
+      <div class="ao-item active">histogram(d)</div>
+      <div class="ao-item">kde(d)</div>
+      <div class="ao-item sub">silvermanBandwidth</div>
+      <div class="ao-item">ecdf(d) &amp; methods</div>
+    </aside>
+  </div>
+</div>
+
+<div class="preview-note">PREVIEW · click Home / Guide in the nav to switch layouts</div>
+
+<script>
+// view switching
+document.querySelectorAll('[data-go]').forEach(b => {
+  b.addEventListener('click', () => {
+    document.body.dataset.view = b.dataset.go;
+    document.querySelectorAll('.nav-link').forEach(n => n.classList.toggle('active', n.dataset.go === b.dataset.go));
+    window.scrollTo(0, 0);
+  });
+});
+document.querySelector('.nav-link[data-go="home"]').classList.add('active');
+
+// light / dark toggle
+const MOON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+const SUN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19"/></svg>';
+const tt = document.getElementById('theme-toggle');
+tt.addEventListener('click', () => {
+  const light = document.body.dataset.theme === 'light';
+  document.body.dataset.theme = light ? 'dark' : 'light';
+  tt.innerHTML = light ? MOON : SUN;
+});
+
+// ---- charts (plain arrays → SVG, mirrors what the lib outputs) ----
+const HIST = [8, 19, 34, 49, 58, 52, 40, 27, 16, 8, 4];
+const W = 320, H = 170, PX = 30, PY = 14, PB = 22;
+const iw = W - PX - 8, ih = H - PY - PB;
+const maxH = Math.max(...HIST);
+
+function bars(svg) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const n = HIST.length, gap = 4, bw = (iw - gap * (n - 1)) / n;
+  // gridlines + y labels
+  for (let g = 0; g <= 3; g++) {
+    const y = PY + ih - (ih * g / 3);
+    const ln = document.createElementNS(ns, 'line');
+    ln.setAttribute('x1', PX); ln.setAttribute('x2', PX + iw);
+    ln.setAttribute('y1', y); ln.setAttribute('y2', y); ln.setAttribute('class', 'axis');
+    svg.appendChild(ln);
+    const t = document.createElementNS(ns, 'text');
+    t.setAttribute('x', PX - 6); t.setAttribute('y', y + 3); t.setAttribute('text-anchor', 'end');
+    t.textContent = Math.round(maxH * g / 3);
+    svg.appendChild(t);
+  }
+  HIST.forEach((v, i) => {
+    const x = PX + i * (bw + gap), bh = ih * v / maxH;
+    const r = document.createElementNS(ns, 'rect');
+    r.setAttribute('x', x); r.setAttribute('y', PY + ih - bh);
+    r.setAttribute('width', bw); r.setAttribute('height', bh);
+    r.setAttribute('rx', 1.5); r.setAttribute('fill', i % 2 ? 'var(--dt-c2)' : 'var(--dt-c1)');
+    r.setAttribute('opacity', '0.92');
+    svg.appendChild(r);
+  });
+  // x labels
+  [0, 5, 10].forEach(i => {
+    const t = document.createElementNS(ns, 'text');
+    t.setAttribute('x', PX + i * (bw + gap) + bw / 2); t.setAttribute('y', H - 6);
+    t.setAttribute('text-anchor', 'middle'); t.textContent = i * 4;
+    svg.appendChild(t);
+  });
+}
+
+function kdeChart(svg) {
+  const ns = 'http://www.w3.org/2000/svg';
+  // faint histogram behind
+  const n = HIST.length, gap = 4, bw = (iw - gap * (n - 1)) / n;
+  HIST.forEach((v, i) => {
+    const x = PX + i * (bw + gap), bh = ih * v / maxH;
+    const r = document.createElementNS(ns, 'rect');
+    r.setAttribute('x', x); r.setAttribute('y', PY + ih - bh);
+    r.setAttribute('width', bw); r.setAttribute('height', bh);
+    r.setAttribute('rx', 1.5); r.setAttribute('fill', 'var(--dt-c1)'); r.setAttribute('opacity', '0.18');
+    svg.appendChild(r);
+  });
+  // smooth KDE curve (gaussian-ish sampled)
+  const pts = [];
+  const mu = 4.4, sg = 2.3;
+  for (let i = 0; i <= 60; i++) {
+    const t = i / 60, xv = t * 10;
+    const dens = Math.exp(-((xv - mu) ** 2) / (2 * sg * sg));
+    const px = PX + t * iw;
+    const py = PY + ih - dens * ih * 0.92;
+    pts.push([px, py]);
+  }
+  let dpath = `M ${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+    const cx = (x0 + x1) / 2;
+    dpath += ` Q ${x0} ${y0} ${cx} ${(y0 + y1) / 2}`;
+  }
+  // area
+  const area = document.createElementNS(ns, 'path');
+  area.setAttribute('d', dpath + ` L ${pts[pts.length-1][0]} ${PY+ih} L ${pts[0][0]} ${PY+ih} Z`);
+  area.setAttribute('fill', 'var(--dt-c2)'); area.setAttribute('opacity', '0.12');
+  svg.appendChild(area);
+  const p = document.createElementNS(ns, 'path');
+  p.setAttribute('d', dpath); p.setAttribute('fill', 'none');
+  p.setAttribute('stroke', 'var(--dt-c2)'); p.setAttribute('stroke-width', '2');
+  svg.appendChild(p);
+  // baseline
+  const ln = document.createElementNS(ns, 'line');
+  ln.setAttribute('x1', PX); ln.setAttribute('x2', PX + iw);
+  ln.setAttribute('y1', PY + ih); ln.setAttribute('y2', PY + ih); ln.setAttribute('class', 'axis');
+  svg.appendChild(ln);
+}
+
+bars(document.getElementById('chart-hist'));
+kdeChart(document.getElementById('chart-kde'));
+</script>
+</body>
+</html>
