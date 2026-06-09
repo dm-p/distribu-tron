@@ -9,6 +9,7 @@ const props = withDefaults(
     input: DistributionInput;
     kind: "histogram" | "kde" | "ecdf";
     bins?: number;
+    bandwidth?: number | "silverman";
     caption?: string;
   }>(),
   { caption: "" },
@@ -23,7 +24,11 @@ const bars = computed(() =>
     ? histogramBars(histogram(dist.value, props.bins ? { binCount: props.bins } : {}), geo)
     : null,
 );
-const curve = computed(() => (props.kind === "kde" ? kdeCurve(kde(dist.value), geo) : null));
+const curve = computed(() =>
+  props.kind === "kde"
+    ? kdeCurve(kde(dist.value, props.bandwidth ? { bandwidth: props.bandwidth } : {}), geo)
+    : null,
+);
 const step = computed(() => (props.kind === "ecdf" ? ecdfStep(ecdf(dist.value), geo) : null));
 
 const inputText = computed(() => {
