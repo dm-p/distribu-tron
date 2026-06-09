@@ -38,6 +38,8 @@ describe("kdeCurve", () => {
     ];
     const view = kdeCurve(pts, geo);
     expect(view.line.startsWith("M ")).toBe(true);
+    // the curve is smoothed with quadratic Béziers, not straight segments.
+    expect(view.line).toContain(" Q ");
     expect(view.area.trim().endsWith("Z")).toBe(true);
     // peak density maps to the top of the chart area.
     expect(view.peakY).toBeCloseTo(geo.padT, 5);

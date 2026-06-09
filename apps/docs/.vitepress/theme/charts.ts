@@ -113,7 +113,17 @@ export function kdeCurve(points: KdePoint[], geo: ChartGeometry = DEFAULT_GEOMET
     const py = geo.padT + ih - (maxD > 0 ? (p.density / maxD) * ih : 0);
     return [px, py] as const;
   });
-  const line = `M ${xy[0][0]} ${xy[0][1]}` + xy.slice(1).map(([x, y]) => ` L ${x} ${y}`).join("");
+  // Smooth the polyline with quadratic Béziers through segment midpoints. This
+  // low-pass rounds the Epanechnikov kernel's support-edge kinks; because each
+  // Bézier stays within the convex hull of its points, the curve never overshoots
+  // above the sampled peak or below the baseline (safe for a density).
+  let line = `M ${xy[0][0]} ${xy[0][1]}`;
+  for (let i = 1; i < xy.length; i++) {
+    const [x0, y0] = xy[i - 1];
+    const [x1, y1] = xy[i];
+    line += ` Q ${x0} ${y0} ${(x0 + x1) / 2} ${(y0 + y1) / 2}`;
+  }
+  line += ` L ${xy[xy.length - 1][0]} ${xy[xy.length - 1][1]}`;
   const area = `${line} L ${xy[xy.length - 1][0]} ${baselineY} L ${xy[0][0]} ${baselineY} Z`;
   const peakY = geo.padT + ih - (maxD > 0 ? ih : 0);
   return { line, area, peakY, baselineY };
