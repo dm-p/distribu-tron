@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { group } from "./group";
-import { summarize, groupedHistogram, groupedKde } from "./group";
+import { group, summarize, groupedHistogram, groupedKde } from "./group";
+import { scottBandwidth } from "./kde";
+import { stdev } from "./descriptives";
 
 const rows = [
   { cat: "A", value: 1, weight: 10 },
@@ -65,5 +66,36 @@ describe("grouped consumers", () => {
     expect(s.filter((r) => r.depth === 1).length).toBe(2); // both leaf cats
     const noOverall = summarize(gd, { includeOverall: false });
     expect(noOverall.some((r) => r.depth === 0)).toBe(false);
+  });
+});
+
+describe("groupedKde kernels & bandwidth", () => {
+  // Overall distribution here is heavy-tailed: IQR/1.349 << stdev, so Scott (stdev-only) and
+  // Silverman (robust min) give clearly different bandwidths — making the Scott path observable.
+  const rows = [
+    { g: "a", v: 0, w: 5 },
+    { g: "a", v: 1, w: 5 },
+    { g: "b", v: 1, w: 5 },
+    { g: "b", v: 20, w: 1 },
+  ];
+  const gd = group(rows, { by: "g", value: "v", weight: "w" });
+
+  it("forwards the kernel option to every series", () => {
+    const gauss = groupedKde(gd, { bandwidth: 1, kernel: "gaussian" });
+    const epan = groupedKde(gd, { bandwidth: 1, kernel: "epanechnikov" });
+    expect(gauss.length).toBe(epan.length);
+    const differs = gauss.some((p, i) => Math.abs(p.density - epan[i]!.density) > 1e-9);
+    expect(differs).toBe(true);
+  });
+
+  it("derives the shared bandwidth via Scott when bandwidth: 'scott'", () => {
+    const overallScott = scottBandwidth(gd.overall.n, stdev(gd.overall));
+    const byName = groupedKde(gd, { bandwidth: "scott", kernel: "gaussian" });
+    const byNumber = groupedKde(gd, { bandwidth: overallScott, kernel: "gaussian" });
+    expect(byName.length).toBe(byNumber.length);
+    for (let i = 0; i < byName.length; i++) {
+      expect(byName[i]!.density).toBeCloseTo(byNumber[i]!.density, 10);
+      expect(byName[i]!.x).toBeCloseTo(byNumber[i]!.x, 10);
+    }
   });
 });
