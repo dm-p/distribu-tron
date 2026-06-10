@@ -177,6 +177,22 @@ describe("group", () => {
     }
   });
 
+  it('rollup: "cube" emits no empty margins for a sparse cross-product (absent cells stay absent)', () => {
+    const sparse = [
+      { a: "x", b: "p", value: 1, weight: 1 },
+      { a: "x", b: "q", value: 2, weight: 1 },
+      { a: "y", b: "p", value: 3, weight: 1 },
+      // (y, q) absent: a leaf/margin is only emitted for cells that actually occur.
+    ];
+    const gd = group(sparse, { by: ["a", "b"], value: "value", weight: "weight", rollup: "cube", totalLabel: "(All)" });
+    // Only present cells produce groups: 3 leaves (not 4) + 2 a-margins + 2 b-margins + grand = 8.
+    expect(gd.leaves.length).toBe(3);
+    expect(gd.groups.length).toBe(8);
+    // No (y, q) leaf is synthesized, and every emitted group has positive mass (no empty Distributions).
+    expect(gd.groups.some((g) => g.depth === 2 && g.key.a === "y" && g.key.b === "q")).toBe(false);
+    expect(gd.groups.every((g) => g.distribution.n > 0)).toBe(true);
+  });
+
   it("sorted:true does not corrupt overall or rollup subtotals (cross-group concatenation)", () => {
     // each leaf's rows arrive value-ascending (so sorted:true is valid per-leaf), but across groups the
     // values interleave — overall and subtotals concatenate them and must still sort/aggregate.
