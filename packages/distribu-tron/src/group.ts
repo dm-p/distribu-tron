@@ -17,7 +17,7 @@ import { distribution } from "./distribution";
 import { histogram } from "./histogram";
 import { kde } from "./kde";
 import { summary } from "./summary";
-import { silvermanFor } from "./internal/silverman";
+import { resolveBandwidth } from "./internal/silverman";
 
 function acc<T>(a: Accessor<T>): (row: Record<string, unknown>) => T {
   return typeof a === "function" ? a : (row) => row[a] as T;
@@ -207,9 +207,12 @@ export function groupedHistogram(gd: GroupedDistribution, opts: HistogramOptions
  */
 export function groupedKde(gd: GroupedDistribution, opts: KdeOptions & LevelSelect = {}): Tagged<KdePoint>[] {
   // Shared sample points + bandwidth from the overall rollup.
-  const template = kde(gd.overall, opts);
+  // The grid is derived kernel-independently (no kernel option) so compact-support kernels like
+  // Epanechnikov do not produce a narrower grid than Gaussian (trimZeroTails is kernel-sensitive).
+  const { kernel: _kernel, ...gridOpts } = opts;
+  const template = kde(gd.overall, gridOpts);
   const samplePoints = template.map((p) => p.x);
-  const bandwidth = resolveSharedBandwidth(gd.overall, opts.bandwidth);
+  const bandwidth = resolveBandwidth(gd.overall, opts.bandwidth);
   const out: Tagged<KdePoint>[] = [];
   for (const g of selectGroups(gd, opts)) {
     for (const p of kde(g.distribution, { ...opts, samplePoints, bandwidth })) out.push(tag(g, p));
@@ -222,10 +225,4 @@ function edgesOf(bins: Bin[]): number[] {
   const edges = bins.map((b) => b.x0);
   edges.push(bins[bins.length - 1]!.x1);
   return edges;
-}
-
-function resolveSharedBandwidth(overall: Distribution, bw: KdeOptions["bandwidth"]): number {
-  // Manual bandwidth passes through; otherwise derive Silverman once from the overall
-  // rollup so every group's curve uses the same width (comparable across groups).
-  return typeof bw === "number" ? bw : silvermanFor(overall);
 }

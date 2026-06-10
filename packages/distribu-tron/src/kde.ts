@@ -1,14 +1,17 @@
 import type { Distribution, KdeOptions, KdePoint } from "./types";
 import { ticks } from "./internal/ticks";
-import { silvermanFor } from "./internal/silverman";
+import { type Kernel, resolveKernel } from "./internal/kernels";
+import { resolveBandwidth } from "./internal/silverman";
 
-export { silvermanBandwidth } from "./internal/silverman";
+export { silvermanBandwidth, scottBandwidth } from "./internal/silverman";
 
 const ZERO = 1e-8;
 const DEFAULT_RESOLUTION = 50;
 
 /**
- * Windowed Epanechnikov kernel density estimate over the prepared distribution.
+ * Windowed kernel density estimate over the prepared distribution. The kernel defaults to Gaussian
+ * (`options.kernel` selects "gaussian" | "epanechnikov" | "triangular" | "cosine"); `bandwidth` is the
+ * kernel standard deviation, defaulting to the Silverman rule ("scott" is also available).
  * Returns `[]` for an empty/zero-mass distribution, and also when the resolved bandwidth is not
  * positive — which includes the degenerate single-value case (zero spread ⇒ silverman bandwidth 0).
  * Callers needing a curve for a (near-)degenerate distribution must pass an explicit numeric
@@ -19,19 +22,14 @@ export function kde(d: Distribution, options: KdeOptions = {}): KdePoint[] {
   if (d.size === 0 || d.n <= 0) return [];
   const bandwidth = resolveBandwidth(d, options.bandwidth);
   if (!(bandwidth > 0)) return [];
+  const kernel = resolveKernel(options.kernel);
   const clamp = options.clamp ?? false;
   const sample = options.samplePoints
     ? Array.from(options.samplePoints)
     : buildSamplePoints(d.min, d.max, options.resolution ?? DEFAULT_RESOLUTION, clamp);
-  const pts: KdePoint[] = sample.map((x) => ({ x, density: density(d, x, bandwidth) }));
+  const pts: KdePoint[] = sample.map((x) => ({ x, density: density(d, x, bandwidth, kernel) }));
   if (options.samplePoints) return pts; // caller controls the grid exactly
   return clamp ? pts.filter((p) => p.x >= d.min && p.x <= d.max) : trimZeroTails(pts);
-}
-
-function resolveBandwidth(d: Distribution, bw: KdeOptions["bandwidth"]): number {
-  // A numeric bandwidth passes through; "silverman" (the default) is derived from the shared helper,
-  // which uses the canonical interpolated IQR + weighted population stdev.
-  return typeof bw === "number" ? bw : silvermanFor(d);
 }
 
 function buildSamplePoints(min: number, max: number, resolution: number, clamp: boolean): number[] {
@@ -57,14 +55,14 @@ function buildSamplePoints(min: number, max: number, resolution: number, clamp: 
   return out;
 }
 
-function density(d: Distribution, x: number, h: number): number {
-  const lo = lowerBound(d, x - h),
-    hi = upperBound(d, x + h);
+function density(d: Distribution, x: number, bandwidth: number, kernel: Kernel): number {
+  const a = bandwidth * kernel.sdScale; // native scale
+  const w = bandwidth * kernel.radius; // window half-width in x units
+  const lo = lowerBound(d, x - w);
+  const hi = upperBound(d, x + w);
   let acc = 0;
   for (let i = lo; i < hi; i++) {
-    const u = (x - d.values[i]!) / h;
-    const k = Math.abs(u) <= 1 ? (0.75 * (1 - u * u)) / h : 0;
-    acc += (d.weights[i]! / d.n) * k;
+    acc += (d.weights[i]! / d.n) * (kernel.k((x - d.values[i]!) / a) / a);
   }
   return Math.abs(acc) < ZERO ? 0 : acc;
 }
