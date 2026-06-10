@@ -4,7 +4,7 @@ Plot-ready shape and density series, all read from the prepared
 [`Distribution`](./distribution#the-distribution-object).
 
 ```ts
-import { histogram, DEFAULT_MAX_AUTO_BINS, kde, silvermanBandwidth, ecdf, cdf } from "distribu-tron";
+import { histogram, DEFAULT_MAX_AUTO_BINS, kde, silvermanBandwidth, scottBandwidth, ecdf, cdf } from "distribu-tron";
 ```
 
 ## `histogram(d, options?)`
@@ -64,7 +64,8 @@ The default cap (`50`) applied to the auto-computed Freedman–Diaconis bin coun
 
 ## `kde(d, options?)`
 
-Windowed Epanechnikov kernel density estimate over the prepared distribution. Returns `KdePoint[]`.
+Windowed kernel density estimate over the prepared distribution. The kernel defaults to **gaussian**.
+Returns `KdePoint[]`.
 
 **Parameters**
 
@@ -83,18 +84,21 @@ interface KdePoint {
 **`KdeOptions`**
 
 ```ts
+type KdeKernel = "gaussian" | "epanechnikov" | "triangular" | "cosine";
+
 interface KdeOptions {
-  bandwidth?: number | "silverman"; // numeric width, or "silverman" (the default)
+  bandwidth?: number | "silverman" | "scott"; // kernel standard deviation; "silverman" is the default
   resolution?: number; // number of interior sample points (default 50)
   clamp?: boolean; // restrict the grid to [d.min, d.max] (default false)
   samplePoints?: ArrayLike<number>; // explicit x grid; overrides resolution/clamp entirely
-  kernel?: "epanechnikov"; // only "epanechnikov" is supported (the default)
+  kernel?: KdeKernel; // smoothing kernel; "gaussian" is the default
 }
 ```
 
-- **`bandwidth`** — a positive number passes through; `"silverman"` (the default) derives the
-  bandwidth from the distribution via [`silvermanBandwidth`](#silvermanbandwidth-n-iqr-sd) using the
-  canonical interpolated IQR and weighted population stdev.
+- **`bandwidth`** — the **kernel standard deviation**. A positive number passes through (the same
+  value gives comparable smoothing across kernels); `"silverman"` (the default, robust) derives the
+  bandwidth via [`silvermanBandwidth`](#silvermanbandwidth-n-iqr-sd), and `"scott"` via
+  [`scottBandwidth`](#scottbandwidth-n-sd) (normal-reference). Both are standard-deviation-scale.
 - **`resolution`** (default `50`) — the number of interior sample points; the grid is padded with
   tapering buffer points on each side unless `clamp` is set.
 - **`clamp`** (default `false`) — when `true`, anchors the grid to exactly `[d.min, d.max]` and
@@ -102,7 +106,9 @@ interface KdeOptions {
   all-zero tails.
 - **`samplePoints`** — an explicit x grid. When provided it is used exactly as given (no padding,
   trimming, or clamping); `resolution` and `clamp` are ignored.
-- **`kernel`** — only `"epanechnikov"` is supported; present for forward-compatibility.
+- **`kernel`** — `"gaussian" | "epanechnikov" | "triangular" | "cosine"`, default `"gaussian"`. The
+  `KdeKernel` type is exported. Gaussian is smooth; the compact kernels (epanechnikov, triangular,
+  cosine) have finite support.
 
 **Returns** `KdePoint[]` — `{ x, density }` points along the sample grid.
 
@@ -130,6 +136,22 @@ Silverman's rule-of-thumb bandwidth: `1.06 · A · n^(−1/5)`, where the spread
 interpolated IQR and weighted population `stdev`). Call `silvermanBandwidth` directly only when you
 want to compute or adjust the bandwidth by hand.
 :::
+
+## `scottBandwidth(n, sd)`
+
+Scott's normal-reference bandwidth: `1.06 · sd · n^(−1/5)`. Like Silverman but without the robust
+`min(·, IQR/1.349)` term, so it uses the full standard deviation. Returns `number` (standard-deviation
+scale, matching the `bandwidth` convention).
+
+**Parameters**
+
+- `n: number` — effective sample size (total weight).
+- `sd: number` — the standard deviation.
+
+**Returns** `number` — the bandwidth.
+
+**Degenerate input** — `0` when `sd` is `0`; `Infinity` when `n ≤ 0` (and `sd > 0`). `kde()` treats
+any non-positive bandwidth as degenerate and returns `[]`.
 
 ## `ecdf(d)`
 

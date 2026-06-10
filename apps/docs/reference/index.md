@@ -54,6 +54,7 @@ Plot-ready shape and density series, all derived from the same substrate.
 - [`DEFAULT_MAX_AUTO_BINS`](./histogram-kde-ecdf#default-max-auto-bins)
 - [`kde(d, options?)`](./histogram-kde-ecdf#kde-d-options)
 - [`silvermanBandwidth(n, iqr, sd)`](./histogram-kde-ecdf#silvermanbandwidth-n-iqr-sd)
+- [`scottBandwidth(n, sd)`](./histogram-kde-ecdf#scottbandwidth-n-sd)
 - [`ecdf(d)`](./histogram-kde-ecdf#ecdf-d)
 - [`cdf(d, value)`](./histogram-kde-ecdf#cdf-d-value)
 
@@ -78,7 +79,7 @@ All public types are re-exported from the package root (`export type * from "./t
 
 `WeightedValue`, `DistributionInput`, `DistributionOptions`, `PrepTimings`, `Distribution`,
 `QuantileMethod`, `SummaryStatistics`, `Bin`, `KdePoint`, `EcdfPoint`, `BoxplotResult`,
-`HistogramOptions`, `KdeOptions`, `GroupKeyValue`, `Accessor`, `GroupSpec`, `DistributionGroup`,
+`HistogramOptions`, `KdeOptions`, `KdeKernel`, `GroupKeyValue`, `Accessor`, `GroupSpec`, `DistributionGroup`,
 `GroupedDistribution`, `LevelSelect`.
 
 Each type is documented inline on the page where the relevant function lives.
