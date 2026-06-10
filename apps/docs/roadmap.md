@@ -32,8 +32,8 @@ The library is in active beta. The full v1 API surface is shipped and stable:
 
 - `histogram()` — Freedman–Diaconis auto-binning (capped), or explicit `binCount` /
   `edges`
-- `kde()` — Epanechnikov kernel, Silverman bandwidth (or manual), configurable resolution
-  and clamping
+- `kde()` — four kernels (gaussian default, plus epanechnikov / triangular / cosine), Silverman or
+  Scott bandwidth (or manual), configurable resolution and clamping
 - `ecdf()`, `cdf()` — empirical CDF step points and point-in-time CDF value
 
 **Grouping and ROLLUP**
@@ -53,14 +53,13 @@ The library is in active beta. The full v1 API surface is shipped and stable:
 ## Planned / under consideration
 
 The following phases are drawn directly from the design spec. All slot into existing
-reserved option fields (`KdeOptions.kernel`, `KdeOptions.bandwidth`,
-`HistogramOptions.rule`, etc.) without changing existing signatures.
+reserved option fields (`HistogramOptions.rule`, etc.) without changing existing signatures.
 
 **Phase 2 — additional density estimation**
 
-Additional KDE kernels (Gaussian, triangular, cosine) and bandwidth selectors (Scott's
-rule, cross-validation), exposed via the already-reserved `kernel` and `bandwidth` slots
-in `KdeOptions`.
+Cross-validation bandwidth selection, exposed via the `KdeOptions.bandwidth` slot. (KDE
+kernels — gaussian, epanechnikov, triangular, cosine — and the Scott bandwidth selector
+have already shipped.)
 
 **Phase 3 — additional binning rules**
 

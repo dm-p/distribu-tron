@@ -50,8 +50,8 @@ The public surface (see [The model](./the-model) for the prepared-substrate desi
   `skewness`, `kurtosis`.
 - **Quantiles** — `quantile` (five methods), `median`, `quartiles`, `percentileRank`.
 - **Box plot** — `boxplot` (Tukey fences, whisker-adjacent values, outliers).
-- **Shape & density** — `histogram` (Freedman–Diaconis auto-binning), `kde` (Epanechnikov KDE with
-  Silverman bandwidth, plus `silvermanBandwidth`), `ecdf` / `cdf`.
+- **Shape & density** — `histogram` (Freedman–Diaconis auto-binning), `kde` (four kernels, gaussian
+  default; Silverman / Scott bandwidth, plus `silvermanBandwidth` / `scottBandwidth`), `ecdf` / `cdf`.
 - **Summary** — `summary`, a single object of the common descriptives + quartiles.
 - **Grouping** — `group` (per-key distributions with optional prefix-ROLLUP subtotals and grand
   total), `summarize`, `groupedHistogram`, `groupedKde` (shared-domain grouped consumers).
