@@ -193,6 +193,52 @@ describe("group", () => {
     expect(gd.groups.every((g) => g.distribution.n > 0)).toBe(true);
   });
 
+  it('rollup: "cube" keeps a real value equal to totalLabel disambiguable by depth, not key', () => {
+    // A real `series` value literally equal to the totalLabel collides with the rolled-up label. cube
+    // widens this surface (it also rolls the leading dim), so the same key string can appear at two depths.
+    const collide = [
+      { category: "Bikes", series: "(All)", value: 5, weight: 5 }, // real value collides with totalLabel
+      { category: "Bikes", series: "2025", value: 10, weight: 7 },
+    ];
+    const gd = group(collide, {
+      by: ["category", "series"],
+      value: "value",
+      weight: "weight",
+      rollup: "cube",
+      totalLabel: "(All)",
+    });
+    // {Bikes,(All)} exists at BOTH depth 2 (the real leaf) and depth 1 (the category margin):
+    const bikesAll = gd.groups.filter((g) => g.key.category === "Bikes" && g.key.series === "(All)");
+    expect(bikesAll.map((g) => g.depth).sort()).toEqual([1, 2]);
+    expect(bikesAll.find((g) => g.depth === 2)!.distribution.n).toBe(5); // the real leaf, its own rows only
+    expect(bikesAll.find((g) => g.depth === 1)!.distribution.n).toBe(12); // category margin: both series merged
+    // the grand total is unaffected by the colliding label.
+    expect(gd.groups.find((g) => g.depth === 0)!.distribution.n).toBe(gd.overall.n); // 12
+  });
+
+  it('rollup: "cube" merges intermediate (depth N-1) faces across the rolled dimension at N=3', () => {
+    // Two rows share (a=x, c=m) but differ in b, so the [a,c] face cell must merge them across rolled b.
+    const facets3 = [
+      { a: "x", b: "p", c: "m", value: 10, weight: 2 },
+      { a: "x", b: "q", c: "m", value: 20, weight: 3 },
+      { a: "y", b: "p", c: "n", value: 30, weight: 1 },
+    ];
+    const gd = group(facets3, {
+      by: ["a", "b", "c"],
+      value: "value",
+      weight: "weight",
+      rollup: "cube",
+      totalLabel: "(All)",
+    });
+    const faceXM = gd.groups.find(
+      (g) => g.depth === 2 && g.level.join("|") === "a|c" && g.key.a === "x" && g.key.c === "m",
+    )!;
+    expect(faceXM.key.b).toBe("(All)"); // b rolled up on this face
+    expect(faceXM.distribution.n).toBe(5); // 2 + 3
+    expect(Array.from(faceXM.distribution.values)).toEqual([10, 20]);
+    expect(Array.from(faceXM.distribution.weights)).toEqual([2, 3]);
+  });
+
   it("sorted:true does not corrupt overall or rollup subtotals (cross-group concatenation)", () => {
     // each leaf's rows arrive value-ascending (so sorted:true is valid per-leaf), but across groups the
     // values interleave — overall and subtotals concatenate them and must still sort/aggregate.

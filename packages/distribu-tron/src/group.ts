@@ -40,9 +40,9 @@ function* combinations(n: number, k: number): Generator<number[]> {
 }
 
 /**
- * Active-dimension index subsets to emit as subtotals — i.e. the proper non-empty subsets of `[0, n)`
+ * Active-dimension index subsets to emit as subtotals - i.e. the proper non-empty subsets of `[0, n)`
  * the mode calls for (leaves = the full set and the grand total = the empty set are emitted separately).
- * Emit order: descending size (depth), then ascending lexicographic within a size.
+ * Emit order: descending size (depth), then ascending lexicographic by active-index position within a size.
  *   - "prefix"  → one subset per size: the prefix [0 … size-1]  (today's hierarchical ROLLUP)
  *   - "cube"    → every subset of each size                     (full CUBE)
  *   - "margins" → only the size-1 subsets                       (each single-dimension margin)
