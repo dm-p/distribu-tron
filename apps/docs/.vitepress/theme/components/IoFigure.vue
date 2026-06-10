@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { distribution, ecdf, histogram, kde } from "distribu-tron";
-import type { DistributionInput } from "distribu-tron";
+import type { DistributionInput, KdeKernel } from "distribu-tron";
 import { DEFAULT_GEOMETRY, ecdfStep, histogramBars, kdeCurve } from "../charts";
 
 const props = withDefaults(
@@ -9,10 +9,12 @@ const props = withDefaults(
     input: DistributionInput;
     kind: "histogram" | "kde" | "ecdf";
     bins?: number;
-    bandwidth?: number | "silverman";
+    bandwidth?: number | "silverman" | "scott";
+    kernel?: KdeKernel;
+    smooth?: boolean;
     caption?: string;
   }>(),
-  { caption: "" },
+  { caption: "", smooth: false },
 );
 
 const geo = DEFAULT_GEOMETRY;
@@ -26,7 +28,14 @@ const bars = computed(() =>
 );
 const curve = computed(() =>
   props.kind === "kde"
-    ? kdeCurve(kde(dist.value, props.bandwidth ? { bandwidth: props.bandwidth } : {}), geo)
+    ? kdeCurve(
+        kde(dist.value, {
+          ...(props.bandwidth ? { bandwidth: props.bandwidth } : {}),
+          ...(props.kernel ? { kernel: props.kernel } : {}),
+        }),
+        geo,
+        props.smooth,
+      )
     : null,
 );
 const step = computed(() => (props.kind === "ecdf" ? ecdfStep(ecdf(dist.value), geo) : null));
