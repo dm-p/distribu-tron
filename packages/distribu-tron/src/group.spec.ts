@@ -10,6 +10,8 @@ const rows = [
   { category: "Accessories", series: "2025", value: 10, weight: 540 },
 ];
 
+// Distinct 3-D cross-product: every pair-projection is also distinct, so cube's depth-2 faces stay fully
+// populated — which is what makes the "margins omits depth-2" assertion a real contrast, not vacuous.
 const rows3 = [
   { a: "x", b: "p", c: "m", value: 1, weight: 1 },
   { a: "x", b: "q", c: "n", value: 2, weight: 1 },
@@ -139,6 +141,11 @@ describe("group", () => {
     const levels = [...new Set(gd.groups.map((g) => g.level.join("|")))];
     expect(levels).toEqual(["a|b|c", "a", "b", "c", ""]);
     expect(gd.groups.some((g) => g.depth === 2)).toBe(false); // the depth-2 faces cube has, margins omits
+    // Lock the COUNT of margin groups, not just their level labels: 3 dims × 2 cells each = 6 depth-1 groups.
+    expect(gd.groups.filter((g) => g.depth === 1).length).toBe(6);
+    // Spot-check the merge aggregates the right leaves at N=3: the a="x" margin sums its 2 constituent rows.
+    const marginAx = gd.groups.find((g) => g.depth === 1 && g.level[0] === "a" && g.key.a === "x")!;
+    expect(marginAx.distribution.n).toBe(2);
   });
 
   it('rollup: "margins" === "cube" for N ≤ 2', () => {
