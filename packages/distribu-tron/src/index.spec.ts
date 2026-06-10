@@ -36,4 +36,9 @@ describe("public surface", () => {
       expect(typeof (dt as Record<string, unknown>)[name]).toBe("function");
     }
   });
+
+  it("exports scottBandwidth", () => {
+    expect(typeof dt.scottBandwidth).toBe("function");
+    expect(dt.scottBandwidth(100, 2)).toBeCloseTo(1.06 * 2 * Math.pow(100, -0.2), 12);
+  });
 });
