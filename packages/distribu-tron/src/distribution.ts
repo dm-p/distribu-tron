@@ -82,12 +82,12 @@ export function distribution(input: DistributionInput, options: DistributionOpti
     }
   }
 
-  const size = values.length;
-  const cumulative = new Float64Array(size);
+  const distinctCount = values.length;
+  const cumulativeWeights = new Float64Array(distinctCount);
   let running = 0;
-  for (let i = 0; i < size; i++) {
+  for (let i = 0; i < distinctCount; i++) {
     running += weights[i]!;
-    cumulative[i] = running;
+    cumulativeWeights[i] = running;
   }
 
   const timings: PrepTimings | undefined = options.profile
@@ -95,13 +95,13 @@ export function distribution(input: DistributionInput, options: DistributionOpti
     : undefined;
 
   return {
-    size,
+    distinctCount,
     n: running,
-    min: size ? values[0]! : Infinity,
-    max: size ? values[size - 1]! : -Infinity,
+    min: distinctCount ? values[0]! : Infinity,
+    max: distinctCount ? values[distinctCount - 1]! : -Infinity,
     values,
     weights,
-    cumulative,
+    cumulativeWeights,
     ...(timings ? { timings } : {}),
   };
 }

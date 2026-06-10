@@ -10,9 +10,9 @@ describe("distribution", () => {
     ]);
     expect(Array.from(d.values)).toEqual([1, 2, 3]);
     expect(Array.from(d.weights)).toEqual([2, 5, 1]);
-    expect(Array.from(d.cumulative)).toEqual([2, 7, 8]);
+    expect(Array.from(d.cumulativeWeights)).toEqual([2, 7, 8]);
     expect(d.n).toBe(8);
-    expect(d.size).toBe(3);
+    expect(d.distinctCount).toBe(3);
     expect(d.min).toBe(1);
     expect(d.max).toBe(3);
   });
@@ -63,12 +63,12 @@ describe("distribution", () => {
       { value: 1, weight: 0 },
       { value: 2, weight: 5 },
     ]);
-    expect(Array.from(d.cumulative)).toEqual([0, 5]);
+    expect(Array.from(d.cumulativeWeights)).toEqual([0, 5]);
     expect(d.n).toBe(5);
   });
   it("empty distribution is valid", () => {
     const d = distribution([]);
-    expect(d.size).toBe(0);
+    expect(d.distinctCount).toBe(0);
     expect(d.n).toBe(0);
     expect(d.min).toBe(Infinity);
     expect(d.max).toBe(-Infinity);

@@ -3,13 +3,13 @@ import type { Distribution, QuantileMethod } from "./types";
 /** First index whose cumulative weight is strictly greater than `r` (expanded rank). */
 function indexAtRank(d: Distribution, r: number): number {
   let lo = 0,
-    hi = d.size;
+    hi = d.distinctCount;
   while (lo < hi) {
     const mid = (lo + hi) >>> 1;
-    if (d.cumulative[mid]! <= r) lo = mid + 1;
+    if (d.cumulativeWeights[mid]! <= r) lo = mid + 1;
     else hi = mid;
   }
-  return Math.min(lo, d.size - 1);
+  return Math.min(lo, d.distinctCount - 1);
 }
 function valueAtRank(d: Distribution, r: number): number {
   const clamped = Math.max(0, Math.min(r, d.n - 1));
@@ -33,8 +33,8 @@ function valueAtRank(d: Distribution, r: number): number {
  */
 export function quantile(d: Distribution, p: number, opts: { method?: QuantileMethod } = {}): number {
   if (!(p >= 0 && p <= 1)) throw new RangeError(`p must be in [0,1], got ${p}`); // also rejects NaN
-  if (d.size === 0 || d.n <= 0) return NaN;
-  if (d.size === 1) return d.values[0]!;
+  if (d.distinctCount === 0 || d.n <= 0) return NaN;
+  if (d.distinctCount === 1) return d.values[0]!;
   const method = opts.method ?? "linear";
   const h = p * (d.n - 1); // 0-indexed expanded rank
   const lo = Math.floor(h);
@@ -71,14 +71,14 @@ export function quartiles(d: Distribution): { q1: number; q2: number; q3: number
 
 /** P(X ≤ value): cumulative weight of all values ≤ `value`, divided by n. */
 export function percentileRank(d: Distribution, value: number): number {
-  if (d.size === 0 || d.n <= 0) return NaN;
+  if (d.distinctCount === 0 || d.n <= 0) return NaN;
   let lo = 0,
-    hi = d.size; // first index with values[i] > value
+    hi = d.distinctCount; // first index with values[i] > value
   while (lo < hi) {
     const mid = (lo + hi) >>> 1;
     if (d.values[mid]! <= value) lo = mid + 1;
     else hi = mid;
   }
-  const cum = lo === 0 ? 0 : d.cumulative[lo - 1]!;
+  const cum = lo === 0 ? 0 : d.cumulativeWeights[lo - 1]!;
   return cum / d.n;
 }

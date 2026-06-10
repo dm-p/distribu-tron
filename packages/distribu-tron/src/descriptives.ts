@@ -3,7 +3,7 @@ import { neumaierSumMap } from "./internal/sum";
 
 /** Σ value·weight. */
 export function sum(d: Distribution): number {
-  return neumaierSumMap(d.size, (i) => d.values[i]! * d.weights[i]!);
+  return neumaierSumMap(d.distinctCount, (i) => d.values[i]! * d.weights[i]!);
 }
 
 export function mean(d: Distribution): number {
@@ -17,15 +17,15 @@ export function max(d: Distribution): number {
   return d.max;
 }
 export function range(d: Distribution): number {
-  return d.size ? d.max - d.min : NaN;
+  return d.distinctCount ? d.max - d.min : NaN;
 }
 
 function centralMoment(d: Distribution, m: number, mu: number): number {
-  return neumaierSumMap(d.size, (i) => d.weights[i]! * Math.pow(d.values[i]! - mu, m));
+  return neumaierSumMap(d.distinctCount, (i) => d.weights[i]! * Math.pow(d.values[i]! - mu, m));
 }
 
 export function variance(d: Distribution, opts: { sample?: boolean } = {}): number {
-  if (d.size === 0 || d.n <= 0) return NaN; // empty / no observation mass — undefined, like mean
+  if (d.distinctCount === 0 || d.n <= 0) return NaN; // empty / no observation mass — undefined, like mean
   const denom = opts.sample ? d.n - 1 : d.n;
   if (denom <= 0) return NaN; // sample variance needs n > 1; otherwise undefined (0/0)
   const mu = mean(d);
@@ -53,21 +53,22 @@ export function weightedMedianSorted(values: ArrayLike<number>, cumulative: Arra
 }
 
 export function mode(d: Distribution): number {
-  if (d.size === 0) return NaN;
+  if (d.distinctCount === 0) return NaN;
   let best = 0;
-  for (let i = 1; i < d.size; i++) if (d.weights[i]! > d.weights[best]!) best = i; // first max = smallest value
+  for (let i = 1; i < d.distinctCount; i++) if (d.weights[i]! > d.weights[best]!) best = i; // first max = smallest value
   return d.values[best]!;
 }
 
 export function mad(d: Distribution): number {
-  if (d.size === 0) return NaN;
-  const med = weightedMedianSorted(d.values, d.cumulative, d.n);
+  if (d.distinctCount === 0) return NaN;
+  const med = weightedMedianSorted(d.values, d.cumulativeWeights, d.n);
   // Build sorted (deviation, weight) pairs, then walk the weighted lower-median directly.
-  // (Deviations re-sort the domain, so we can't reuse d.cumulative; the inline walk avoids
+  // (Deviations re-sort the domain, so we can't reuse d.cumulativeWeights; the inline walk avoids
   // allocating a second cumulative array over the deviations.)
-  const pairs = Array.from({ length: d.size }, (_, i) => [Math.abs(d.values[i]! - med), d.weights[i]!] as const).sort(
-    (a, b) => a[0] - b[0],
-  );
+  const pairs = Array.from(
+    { length: d.distinctCount },
+    (_, i) => [Math.abs(d.values[i]! - med), d.weights[i]!] as const,
+  ).sort((a, b) => a[0] - b[0]);
   let cum = 0;
   const target = d.n / 2;
   for (const [dev, w] of pairs) {
@@ -78,7 +79,7 @@ export function mad(d: Distribution): number {
 }
 
 export function skewness(d: Distribution): number {
-  if (d.size === 0 || d.n <= 0) return NaN; // empty / no observation mass
+  if (d.distinctCount === 0 || d.n <= 0) return NaN; // empty / no observation mass
   const mu = mean(d);
   const m2 = centralMoment(d, 2, mu) / d.n;
   if (!(m2 > 0)) return 0;
@@ -87,7 +88,7 @@ export function skewness(d: Distribution): number {
 }
 
 export function kurtosis(d: Distribution): number {
-  if (d.size === 0 || d.n <= 0) return NaN; // empty / no observation mass
+  if (d.distinctCount === 0 || d.n <= 0) return NaN; // empty / no observation mass
   const mu = mean(d);
   const m2 = centralMoment(d, 2, mu) / d.n;
   if (!(m2 > 0)) return 0;

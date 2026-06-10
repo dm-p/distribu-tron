@@ -21,7 +21,7 @@ export const DEFAULT_MAX_AUTO_BINS = 50;
  * this by deriving shared edges from the overall distribution, which spans every group's domain.
  */
 export function histogram(d: Distribution, options: HistogramOptions = {}): Bin[] {
-  if (d.size === 0) return [];
+  if (d.distinctCount === 0) return [];
   if (d.min === d.max) return [{ x0: d.min, x1: d.max, weight: d.n }];
   const boundaries =
     options.edges && options.edges.length >= 2
@@ -56,8 +56,8 @@ function autoBinCount(d: Distribution, cap: number): number {
   const iqrVal = quantile(d, 0.75) - quantile(d, 0.25);
   const sd = stdev(d);
   let width: number;
-  if (d.size > 1 && iqrVal > 0) width = (2 * iqrVal) / Math.cbrt(d.size);
-  else if (d.size > 1 && sd > 0) width = (3.5 * sd) / Math.cbrt(d.size);
+  if (d.distinctCount > 1 && iqrVal > 0) width = (2 * iqrVal) / Math.cbrt(d.distinctCount);
+  else if (d.distinctCount > 1 && sd > 0) width = (3.5 * sd) / Math.cbrt(d.distinctCount);
   else width = 1;
   const count = Math.max(1, Math.ceil((d.max - d.min) / width));
   return Math.min(count, Math.max(1, cap));
@@ -74,7 +74,7 @@ function niceStep(raw: number): number {
 function assign(d: Distribution, bins: Bin[]): void {
   const last = bins.length - 1;
   let b = 0;
-  for (let i = 0; i < d.size; i++) {
+  for (let i = 0; i < d.distinctCount; i++) {
     const v = d.values[i]!;
     while (b < last && v >= bins[b]!.x1) b++;
     bins[b]!.weight += d.weights[i]!;

@@ -18,13 +18,13 @@ export interface PrepTimings {
 }
 
 export interface Distribution {
-  readonly size: number;
+  readonly distinctCount: number; // count of DISTINCT values
   readonly n: number;
   readonly min: number;
   readonly max: number;
   readonly values: Float64Array;
   readonly weights: Float64Array;
-  readonly cumulative: Float64Array; // running Σ weight; cumulative[i] = Σ_{j<=i} weights[j]
+  readonly cumulativeWeights: Float64Array; // inclusive running Σ weight; cumulativeWeights[i] = Σ_{j<=i} weights[j]
   readonly timings?: PrepTimings;
 }
 
@@ -32,7 +32,7 @@ export type QuantileMethod = "linear" | "lower" | "higher" | "nearest" | "midpoi
 
 export interface SummaryStatistics {
   n: number;
-  size: number;
+  distinctCount: number;
   mean: number;
   stdev: number;
   min: number;
