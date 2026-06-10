@@ -19,7 +19,7 @@ const DEFAULT_RESOLUTION = 50;
  * sample points.
  */
 export function kde(d: Distribution, options: KdeOptions = {}): KdePoint[] {
-  if (d.size === 0 || d.n <= 0) return [];
+  if (d.distinctCount === 0 || d.n <= 0) return [];
   const bandwidth = resolveBandwidth(d, options.bandwidth);
   if (!(bandwidth > 0)) return [];
   const kernel = resolveKernel(options.kernel);
@@ -69,7 +69,7 @@ function density(d: Distribution, x: number, bandwidth: number, kernel: Kernel):
 
 function lowerBound(d: Distribution, t: number): number {
   let lo = 0,
-    hi = d.size;
+    hi = d.distinctCount;
   while (lo < hi) {
     const m = (lo + hi) >>> 1;
     if (d.values[m]! < t) lo = m + 1;
@@ -79,7 +79,7 @@ function lowerBound(d: Distribution, t: number): number {
 }
 function upperBound(d: Distribution, t: number): number {
   let lo = 0,
-    hi = d.size;
+    hi = d.distinctCount;
   while (lo < hi) {
     const m = (lo + hi) >>> 1;
     if (d.values[m]! <= t) lo = m + 1;

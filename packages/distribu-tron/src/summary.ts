@@ -6,7 +6,7 @@ export function summary(d: Distribution): SummaryStatistics {
   const { q1, q2, q3, iqr } = quartiles(d);
   return {
     n: d.n,
-    size: d.size,
+    distinctCount: d.distinctCount,
     mean: mean(d),
     stdev: stdev(d),
     min: d.min,

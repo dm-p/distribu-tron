@@ -60,8 +60,8 @@ distribution({ values: [5, 9], weights: [3, 1] });  // columnar / TypedArray
 distribution(rows, { sorted: true });
 ```
 
-`Distribution` exposes `size` (distinct count), `n` (total weight, **Σ weight**), `min`, `max`,
-and the read-only `values` / `weights` / `cumulative` arrays.
+`Distribution` exposes `distinctCount` (count of distinct values), `n` (total weight, **Σ weight**), `min`, `max`,
+and the read-only `values` / `weights` / `cumulativeWeights` arrays.
 
 ## What you get
 

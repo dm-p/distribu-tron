@@ -20,7 +20,7 @@ export function silvermanBandwidth(n: number, iqr: number, sd: number): number {
  * empty or degenerate (single-value) distribution.
  */
 export function silvermanFor(d: Distribution): number {
-  if (d.size === 0 || d.n <= 0) return 0;
+  if (d.distinctCount === 0 || d.n <= 0) return 0;
   const iqr = quantile(d, 0.75) - quantile(d, 0.25);
   return silvermanBandwidth(d.n, iqr, stdev(d));
 }
@@ -36,7 +36,7 @@ export function scottBandwidth(n: number, sd: number): number {
 
 /** Derive Scott's bandwidth from a prepared distribution (weighted population stdev). 0 if degenerate. */
 export function scottFor(d: Distribution): number {
-  if (d.size === 0 || d.n <= 0) return 0;
+  if (d.distinctCount === 0 || d.n <= 0) return 0;
   return scottBandwidth(d.n, stdev(d));
 }
 

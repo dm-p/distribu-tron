@@ -6,7 +6,7 @@ describe("summary", () => {
   it("bundles scalar descriptives + quartiles", () => {
     const s = summary(distribution([1, 2, 3, 4, 5]));
     expect(s.n).toBe(5);
-    expect(s.size).toBe(5);
+    expect(s.distinctCount).toBe(5);
     expect(s.median).toBe(3);
     expect(s.q1).toBe(2);
     expect(s.q3).toBe(4);

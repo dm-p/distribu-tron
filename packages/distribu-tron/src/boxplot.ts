@@ -10,7 +10,7 @@ export function boxplot(d: Distribution, opts: { whisker?: number } = {}): Boxpl
   // values are ascending, so the first in-fence value is the lower whisker end and the last is the upper.
   let lowerAdjacent = NaN;
   let upperAdjacent = NaN;
-  for (let i = 0; i < d.size; i++) {
+  for (let i = 0; i < d.distinctCount; i++) {
     if (d.weights[i]! === 0) continue; // zero-weight values carry no mass — not observations
     const v = d.values[i]!;
     if (v < lowerFence || v > upperFence) {

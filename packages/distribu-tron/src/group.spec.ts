@@ -78,7 +78,7 @@ describe("group", () => {
     // subtotal A merges (A,x)=[10,50] + (A,y)=[30] → concatenation [10,50,30]; must come out sorted
     const subA = gd.groups.find((g) => g.depth === 1 && g.key.cat === "A")!;
     expect(Array.from(subA.distribution.values)).toEqual([10, 30, 50]);
-    expect(Array.from(subA.distribution.cumulative)).toEqual([1, 2, 3]);
+    expect(Array.from(subA.distribution.cumulativeWeights)).toEqual([1, 2, 3]);
     // overall across all rows must also be sorted, not left in row order
     expect(Array.from(gd.overall.values)).toEqual([10, 20, 30, 50]);
     expect(gd.overall.n).toBe(4);

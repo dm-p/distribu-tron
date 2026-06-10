@@ -16,7 +16,7 @@ const d = distribution([
 function naiveEpanechnikov(x: number, h: number): number {
   const a = h * Math.sqrt(5);
   let acc = 0;
-  for (let i = 0; i < d.size; i++) {
+  for (let i = 0; i < d.distinctCount; i++) {
     const u = (x - d.values[i]!) / a;
     const k = Math.abs(u) <= 1 ? (0.75 * (1 - u * u)) / a : 0;
     acc += (d.weights[i]! / d.n) * k;
