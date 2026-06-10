@@ -23,6 +23,52 @@ function acc<T>(a: Accessor<T>): (row: Record<string, unknown>) => T {
   return typeof a === "function" ? a : (row) => row[a] as T;
 }
 
+/** Internal resolved form of the public `rollup` slot. */
+type RollupMode = "prefix" | "margins" | "cube";
+
+/** k-combinations of indices [0, n) in lexicographic ascending order, e.g. (3, 2) → [0,1] [0,2] [1,2]. */
+function* combinations(n: number, k: number): Generator<number[]> {
+  const combo = Array.from({ length: k }, (_, i) => i);
+  while (true) {
+    yield combo.slice();
+    let i = k - 1;
+    while (i >= 0 && combo[i]! === n - k + i) i--;
+    if (i < 0) return;
+    combo[i] = combo[i]! + 1;
+    for (let j = i + 1; j < k; j++) combo[j] = combo[j - 1]! + 1;
+  }
+}
+
+/**
+ * Active-dimension index subsets to emit as subtotals — i.e. the proper non-empty subsets of `[0, n)`
+ * the mode calls for (leaves = the full set and the grand total = the empty set are emitted separately).
+ * Emit order: descending size (depth), then ascending lexicographic within a size.
+ *   - "prefix"  → one subset per size: the prefix [0 … size-1]  (today's hierarchical ROLLUP)
+ *   - "cube"    → every subset of each size                     (full CUBE)
+ *   - "margins" → only the size-1 subsets                       (each single-dimension margin)
+ */
+function subtotalSubsets(n: number, mode: RollupMode): number[][] {
+  const subsets: number[][] = [];
+  for (let size = n - 1; size >= 1; size--) {
+    if (mode === "margins" && size !== 1) continue;
+    if (mode === "prefix") {
+      subsets.push(Array.from({ length: size }, (_, i) => i));
+    } else {
+      for (const combo of combinations(n, size)) subsets.push(combo);
+    }
+  }
+  return subsets;
+}
+
+/** Resolve the public `rollup` slot to an internal mode. `true` is the back-compat alias for "prefix";
+ *  `false` / `undefined` mean no rollup (leaves only). */
+function resolveRollupMode(rollup: GroupSpec["rollup"]): RollupMode | null {
+  if (rollup === true || rollup === "prefix") return "prefix";
+  if (rollup === "margins") return "margins";
+  if (rollup === "cube") return "cube";
+  return null;
+}
+
 type Bucket = { key: Record<string, GroupKeyValue>; pairs: WeightedValue[] };
 
 /** Get-or-create the bucket whose id is `key` projected onto `idDims`, then append `pairs` to it. */
@@ -60,35 +106,44 @@ function bucketLeaves(
   return { leafBuckets, allPairs };
 }
 
-/** A leaf key with every dimension at index ≥ `depth` replaced by the rollup total label. */
+/** A leaf key with every dimension NOT in the active index set replaced by the rollup total label. */
 function rolledKey(
   dimensions: string[],
   leafKey: Record<string, GroupKeyValue>,
-  depth: number,
+  active: Set<number>,
   totalLabel: GroupKeyValue,
 ): Record<string, GroupKeyValue> {
   const key: Record<string, GroupKeyValue> = {};
-  for (let i = 0; i < dimensions.length; i++) key[dimensions[i]!] = i < depth ? leafKey[dimensions[i]!]! : totalLabel;
+  for (let i = 0; i < dimensions.length; i++) {
+    const d = dimensions[i]!;
+    key[d] = active.has(i) ? leafKey[d]! : totalLabel;
+  }
   return key;
 }
 
-/** Prefix-ROLLUP subtotals: for depth = dims-1 … 1, merge leaves that share their first `depth` dimensions. */
+/**
+ * Subtotals for the chosen mode. For each active-dimension subset (see {@link subtotalSubsets}), merge the
+ * leaves that share its active-dimension key — no row re-scan. Prefix ROLLUP is the special case where the
+ * active subset is always a prefix of `by`, so this stays byte-for-byte identical for `mode === "prefix"`.
+ */
 function rollupSubtotals(
   leafBuckets: Map<string, Bucket>,
   dimensions: string[],
   totalLabel: GroupKeyValue,
+  mode: RollupMode,
 ): DistributionGroup[] {
   const subtotals: DistributionGroup[] = [];
-  for (let depth = dimensions.length - 1; depth >= 1; depth--) {
-    const activeDims = dimensions.slice(0, depth);
+  for (const activeIdx of subtotalSubsets(dimensions.length, mode)) {
+    const activeDims = activeIdx.map((i) => dimensions[i]!);
+    const active = new Set(activeIdx);
     const buckets = new Map<string, Bucket>();
     for (const leaf of leafBuckets.values()) {
-      bucketPush(buckets, activeDims, rolledKey(dimensions, leaf.key, depth, totalLabel), leaf.pairs);
-    }
-    for (const b of buckets.values()) {
       // A subtotal merges pairs from several leaves (group-insertion order, not value order), so it must
       // always sort/aggregate — never trust spec.sorted here.
-      subtotals.push({ key: b.key, level: activeDims, depth, distribution: distribution(b.pairs) });
+      bucketPush(buckets, activeDims, rolledKey(dimensions, leaf.key, active, totalLabel), leaf.pairs);
+    }
+    for (const b of buckets.values()) {
+      subtotals.push({ key: b.key, level: activeDims, depth: activeIdx.length, distribution: distribution(b.pairs) });
     }
   }
   return subtotals;
@@ -96,7 +151,8 @@ function rollupSubtotals(
 
 /**
  * Group rows into per-key {@link Distribution}s. Returns the leaf groups, the `overall` distribution,
- * and (with `rollup: true`) prefix-ROLLUP subtotals + a grand total tagged by `level`/`depth`.
+ * and (with `rollup`) subtotals + a grand total tagged by `level`/`depth` — prefix ROLLUP (`true`/"prefix"),
+ * every single-dimension margin ("margins"), or all grouping-sets ("cube").
  * Rolled-up dimensions take `spec.totalLabel`, which **defaults to `null`** — consumers filtering by
  * key equality must handle `null` (or pass an explicit label like `"(All)"`).
  */
@@ -118,12 +174,13 @@ export function group(rows: ReadonlyArray<Record<string, unknown>>, spec: GroupS
   }));
   const overall = distribution(allPairs);
 
-  if (!spec.rollup) return { dimensions, groups: leaves, leaves, overall };
+  const mode = resolveRollupMode(spec.rollup);
+  if (!mode) return { dimensions, groups: leaves, leaves, overall };
 
   const grandKey: Record<string, GroupKeyValue> = {};
   for (const dim of dimensions) grandKey[dim] = totalLabel;
   const grand: DistributionGroup = { key: grandKey, level: [], depth: 0, distribution: overall };
-  const groups = [...leaves, ...rollupSubtotals(leafBuckets, dimensions, totalLabel), grand];
+  const groups = [...leaves, ...rollupSubtotals(leafBuckets, dimensions, totalLabel, mode), grand];
   return { dimensions, groups, leaves, overall };
 }
 

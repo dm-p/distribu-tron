@@ -105,7 +105,7 @@ export interface GroupSpec {
   by: string | string[];
   value: Accessor<number>;
   weight?: Accessor<number>;
-  rollup?: boolean;
+  rollup?: boolean | "prefix" | "margins" | "cube";
   totalLabel?: string | null;
   sorted?: boolean;
 }

@@ -58,6 +58,56 @@ describe("group", () => {
     expect(gd.groups.filter((g) => g.depth === 0).length).toBe(1);
     expect(gd.groups.filter((g) => g.depth === 1).length).toBe(2);
   });
+  it('rollup: "cube" emits orthogonal margins (the (All) column prefix ROLLUP omits)', () => {
+    const gd = group(rows, {
+      by: ["category", "series"],
+      value: "value",
+      weight: "weight",
+      rollup: "cube",
+      totalLabel: "(All)",
+    });
+    // Distinct levels in emit order: leaves, then depth-1 by ascending by-position, then grand.
+    const levels = [...new Set(gd.groups.map((g) => g.level.join("|")))];
+    expect(levels).toEqual(["category|series", "category", "series", ""]);
+
+    // The NEW orthogonal margin: category rolled up, series active.
+    const seriesMargin = gd.groups.filter((g) => g.level.length === 1 && g.level[0] === "series");
+    expect(seriesMargin.length).toBe(2);
+    const m2024 = seriesMargin.find((g) => g.key.series === "2024")!;
+    expect(m2024.key.category).toBe("(All)");
+
+    // Merge-equals: rolling category fully up == grouping by "series" alone (an independent path).
+    const bySeries = group(rows, { by: "series", value: "value", weight: "weight" });
+    const leaf2024 = bySeries.leaves.find((g) => g.key.series === "2024")!;
+    expect(m2024.distribution.n).toBe(leaf2024.distribution.n); // 1200 + 1203 = 2403
+    // Identical substrate ⇒ identical quantiles/moments — the margin IS the merge of its leaves.
+    expect(Array.from(m2024.distribution.values)).toEqual(Array.from(leaf2024.distribution.values));
+    expect(Array.from(m2024.distribution.weights)).toEqual(Array.from(leaf2024.distribution.weights));
+  });
+
+  it('rollup: "prefix" equals rollup: true and omits the orthogonal margin (back-compat)', () => {
+    const viaBool = group(rows, {
+      by: ["category", "series"],
+      value: "value",
+      weight: "weight",
+      rollup: true,
+      totalLabel: "(All)",
+    });
+    const viaStr = group(rows, {
+      by: ["category", "series"],
+      value: "value",
+      weight: "weight",
+      rollup: "prefix",
+      totalLabel: "(All)",
+    });
+    const norm = (gd: ReturnType<typeof group>) =>
+      gd.groups.map((g) => ({ key: g.key, level: g.level, depth: g.depth, n: g.distribution.n }));
+    expect(norm(viaStr)).toEqual(norm(viaBool));
+    // Prefix has NO series-only margin — exactly the gap cube fills.
+    const levels = [...new Set(viaBool.groups.map((g) => g.level.join("|")))];
+    expect(levels).toEqual(["category|series", "category", ""]);
+  });
+
   it("sorted:true does not corrupt overall or rollup subtotals (cross-group concatenation)", () => {
     // each leaf's rows arrive value-ascending (so sorted:true is valid per-leaf), but across groups the
     // values interleave — overall and subtotals concatenate them and must still sort/aggregate.
