@@ -6,7 +6,7 @@ All three read directly off the prepared substrate. The figures below are comput
 exam-score frequency table:
 
 <IoFigure :input="[{value:0,weight:8},{value:4,weight:19},{value:8,weight:34},{value:12,weight:49},{value:16,weight:58},{value:20,weight:52},{value:24,weight:40},{value:28,weight:27},{value:32,weight:16},{value:36,weight:8},{value:40,weight:4}]" kind="histogram" caption="histogram()" />
-<IoFigure :input="[{value:0,weight:8},{value:4,weight:19},{value:8,weight:34},{value:12,weight:49},{value:16,weight:58},{value:20,weight:52},{value:24,weight:40},{value:28,weight:27},{value:32,weight:16},{value:36,weight:8},{value:40,weight:4}]" kind="kde" :bandwidth="15" caption="kde() · bandwidth 15" />
+<IoFigure :input="[{value:0,weight:8},{value:4,weight:19},{value:8,weight:34},{value:12,weight:49},{value:16,weight:58},{value:20,weight:52},{value:24,weight:40},{value:28,weight:27},{value:32,weight:16},{value:36,weight:8},{value:40,weight:4}]" kind="kde" caption="kde() — gaussian default" />
 <IoFigure :input="[{value:0,weight:8},{value:4,weight:19},{value:8,weight:34},{value:12,weight:49},{value:16,weight:58},{value:20,weight:52},{value:24,weight:40},{value:28,weight:27},{value:32,weight:16},{value:36,weight:8},{value:40,weight:4}]" kind="ecdf" caption="ecdf()" />
 
 ## `histogram`
@@ -39,26 +39,37 @@ The interquartile range and standard deviation that drive the FD rule route thro
 ## `kde`
 
 ```ts
-import { distribution, kde, silvermanBandwidth } from "distribu-tron";
+import { distribution, kde, silvermanBandwidth, scottBandwidth } from "distribu-tron";
 
-kde(d);                                  // Epanechnikov KDE, Silverman bandwidth (default)
-kde(d, { bandwidth: 2.5 });              // fixed numeric bandwidth
-kde(d, { bandwidth: "silverman" });      // explicit Silverman
-kde(d, { resolution: 256 });             // number of sample points across the domain
-
-silvermanBandwidth(d);                   // the Silverman bandwidth on its own
+kde(d);                                  // gaussian kernel + silverman bandwidth (defaults)
+kde(d, { kernel: "epanechnikov" });      // pick a kernel
+kde(d, { bandwidth: 2.5 });              // numeric bandwidth = kernel standard deviation
+kde(d, { bandwidth: "scott" });          // Scott's rule (alternative selector)
+kde(d, { resolution: 80 });              // number of sample points across the domain
 ```
 
 `kde` returns a `KdePoint[]`, each `{ x, density }`. Options (`KdeOptions`):
 
-- **`bandwidth: number | "silverman"`** — a numeric bandwidth passes through; `"silverman"` (the
-  default) derives the bandwidth from the distribution's spread.
-- **`resolution`** — the number of evenly spaced sample points across the domain.
-- **`kernel: "epanechnikov"`** — the kernel. Epanechnikov is the default and the only supported
-  value.
+- **`kernel: "gaussian" | "epanechnikov" | "triangular" | "cosine"`** — the smoothing kernel,
+  default `"gaussian"` (smooth and continuously differentiable).
+- **`bandwidth: number | "silverman" | "scott"`** — the **kernel standard deviation**; a numeric
+  value gives comparable smoothing across every kernel. `"silverman"` (default, robust) and
+  `"scott"` (normal-reference) are data-driven selectors.
+- **`resolution`** (default `50`) — the number of evenly spaced sample points across the domain.
+
+> **The default just works.** With the gaussian kernel and Silverman bandwidth, `kde(d)` returns a
+> smooth curve out of the box — no kernel or bandwidth tuning needed for a clean plot.
 
 KDE returns `[]` when the resolved bandwidth is not positive — which includes the degenerate
-single-value case, where the spread (and thus the Silverman bandwidth) is `0`.
+single-value case, where the spread (and thus the bandwidth) is `0`.
+
+The four kernels differ mostly at the tails and in smoothness — same data, same bandwidth:
+
+<KernelComparison :input="[{value:0,weight:8},{value:4,weight:19},{value:8,weight:34},{value:12,weight:49},{value:16,weight:58},{value:20,weight:52},{value:24,weight:40},{value:28,weight:27},{value:32,weight:16},{value:36,weight:8},{value:40,weight:4}]" />
+
+> **Changed in the kernel update.** The default kernel is now **gaussian** (was Epanechnikov), and a
+> numeric `bandwidth` now means the kernel **standard deviation**, not the Epanechnikov half-width.
+> To reproduce an old curve, pass `{ kernel: "epanechnikov" }` and `bandwidth: h / Math.sqrt(5)`.
 
 ## `ecdf` and `cdf`
 
