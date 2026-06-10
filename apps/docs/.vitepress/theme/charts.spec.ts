@@ -30,21 +30,23 @@ describe("histogramBars", () => {
 });
 
 describe("kdeCurve", () => {
-  it("produces a line path and a closed area path ending on the baseline", () => {
-    const pts: KdePoint[] = [
-      { x: 0, density: 0 },
-      { x: 1, density: 1 },
-      { x: 2, density: 0 },
-    ];
+  const pts: KdePoint[] = [
+    { x: 0, density: 0 },
+    { x: 1, density: 1 },
+    { x: 2, density: 0 },
+  ];
+  it("renders straight segments by default (real kde() polyline, no smoothing)", () => {
     const view = kdeCurve(pts, geo);
     expect(view.line.startsWith("M ")).toBe(true);
-    // the curve is smoothed with quadratic Béziers, not straight segments.
-    expect(view.line).toContain(" Q ");
+    expect(view.line).not.toContain(" Q ");
     expect(view.area.trim().endsWith("Z")).toBe(true);
-    // peak density maps to the top of the chart area.
     expect(view.peakY).toBeCloseTo(geo.padT, 5);
   });
-
+  it("renders quadratic Béziers when smooth is true", () => {
+    const view = kdeCurve(pts, geo, true);
+    expect(view.line).toContain(" Q ");
+    expect(view.area.trim().endsWith("Z")).toBe(true);
+  });
   it("returns an empty view for no points", () => {
     expect(kdeCurve([], geo).line).toBe("");
   });
