@@ -10,6 +10,13 @@ const rows = [
   { category: "Accessories", series: "2025", value: 10, weight: 540 },
 ];
 
+const rows3 = [
+  { a: "x", b: "p", c: "m", value: 1, weight: 1 },
+  { a: "x", b: "q", c: "n", value: 2, weight: 1 },
+  { a: "y", b: "p", c: "n", value: 3, weight: 1 },
+  { a: "y", b: "q", c: "m", value: 4, weight: 1 },
+];
+
 describe("group", () => {
   it("leaves + overall (no rollup)", () => {
     const gd = group(rows, { by: ["category", "series"], value: "value", weight: "weight" });
@@ -106,6 +113,61 @@ describe("group", () => {
     // Prefix has NO series-only margin — exactly the gap cube fills.
     const levels = [...new Set(viaBool.groups.map((g) => g.level.join("|")))];
     expect(levels).toEqual(["category|series", "category", ""]);
+  });
+
+  it('rollup: "cube" enumerates all 2^N grouping-sets (N=3), deepest-first then lexicographic', () => {
+    const gd = group(rows3, {
+      by: ["a", "b", "c"],
+      value: "value",
+      weight: "weight",
+      rollup: "cube",
+      totalLabel: "(All)",
+    });
+    const levels = [...new Set(gd.groups.map((g) => g.level.join("|")))];
+    // This exact ordering IS the same-depth ordering guarantee (descending size, then ascending by-position).
+    expect(levels).toEqual(["a|b|c", "a|b", "a|c", "b|c", "a", "b", "c", ""]);
+  });
+
+  it('rollup: "margins" emits only single-dimension margins — no intermediate faces (N=3)', () => {
+    const gd = group(rows3, {
+      by: ["a", "b", "c"],
+      value: "value",
+      weight: "weight",
+      rollup: "margins",
+      totalLabel: "(All)",
+    });
+    const levels = [...new Set(gd.groups.map((g) => g.level.join("|")))];
+    expect(levels).toEqual(["a|b|c", "a", "b", "c", ""]);
+    expect(gd.groups.some((g) => g.depth === 2)).toBe(false); // the depth-2 faces cube has, margins omits
+  });
+
+  it('rollup: "margins" === "cube" for N ≤ 2', () => {
+    const norm = (gd: ReturnType<typeof group>) =>
+      gd.groups.map((g) => ({ key: g.key, level: g.level, depth: g.depth, n: g.distribution.n }));
+    const cube = group(rows, {
+      by: ["category", "series"],
+      value: "value",
+      weight: "weight",
+      rollup: "cube",
+      totalLabel: "(All)",
+    });
+    const margins = group(rows, {
+      by: ["category", "series"],
+      value: "value",
+      weight: "weight",
+      rollup: "margins",
+      totalLabel: "(All)",
+    });
+    expect(norm(margins)).toEqual(norm(cube));
+  });
+
+  it("N=1: prefix / margins / cube all collapse to leaves + grand (one axis to roll up)", () => {
+    for (const rollup of [true, "prefix", "margins", "cube"] as const) {
+      const gd = group(rows, { by: "category", value: "value", weight: "weight", rollup, totalLabel: "(All)" });
+      expect(gd.groups.length).toBe(3); // 2 leaves + grand total
+      expect(gd.groups.filter((g) => g.depth === 1).length).toBe(2);
+      expect(gd.groups.filter((g) => g.depth === 0).length).toBe(1);
+    }
   });
 
   it("sorted:true does not corrupt overall or rollup subtotals (cross-group concatenation)", () => {
