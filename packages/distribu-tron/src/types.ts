@@ -85,12 +85,16 @@ export interface HistogramOptions {
   edges?: number[];
 }
 
+export type KdeKernel = "gaussian" | "epanechnikov" | "triangular" | "cosine";
+
 export interface KdeOptions {
-  bandwidth?: number | "silverman";
+  /** Numeric bandwidth = the kernel standard deviation. Defaults to "silverman". */
+  bandwidth?: number | "silverman" | "scott";
   resolution?: number;
   clamp?: boolean;
   samplePoints?: ArrayLike<number>;
-  kernel?: "epanechnikov";
+  /** Smoothing kernel. Defaults to "gaussian". */
+  kernel?: KdeKernel;
 }
 
 // --- grouping ---
