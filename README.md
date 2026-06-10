@@ -74,7 +74,8 @@ import {
   // quantiles & box plot
   quantile, median, quartiles, percentileRank, boxplot,
   // shape & density
-  ecdf, cdf, histogram, kde, silvermanBandwidth,
+  ecdf, cdf, histogram, kde, silvermanBandwidth, scottBandwidth,
+  type KdeKernel,
   // aggregate
   summary,
   // grouping
@@ -91,7 +92,7 @@ import {
   `lower`/`higher`/`nearest`/`midpoint`), `median`, `quartiles`, `percentileRank`, and `boxplot`
   with 1.5·IQR fences + outliers.
 - **Shape & density** - `ecdf`/`cdf`, a capped Freedman–Diaconis `histogram` (weights conserved;
-  explicit `edges` supported), and a windowed Epanechnikov `kde` with Silverman bandwidth.
+  explicit `edges` supported), and `kde` with four kernels and automatic or numeric bandwidth.
 
 > **Quantiles treat weights as frequencies** - `Σweight` is the effective sample size (type-7). Probability /
 > importance weights that sum to ≈1 collapse every quantile to the smallest value; scale them to count
@@ -137,6 +138,35 @@ apart from a leaf whose value happens to equal the total label.
 > **Reserved field names:** grouped helpers flatten the group key onto each output row, so don't
 > name a grouping dimension after an output field (`weight`, `x`, `density`, `n`, `min`, `max`,
 > `median`, `depth`) - the key would overwrite it.
+
+### KDE
+
+`kde(d, options?)` evaluates a kernel density estimate over the distribution's domain and returns
+`{ x, density }[]` sample points. All four standard kernels are supported; the default is
+**Gaussian**, which gives smooth, continuously differentiable output.
+
+```ts
+kde(d);                                       // gaussian kernel, silverman bandwidth (defaults)
+kde(d, { kernel: "epanechnikov" });           // compact-support parabolic kernel
+kde(d, { kernel: "triangular" });             // tent function, continuous but not smooth
+kde(d, { kernel: "cosine" });                 // cosine-shaped, compact support
+
+kde(d, { bandwidth: 2.5 });                   // numeric bandwidth = kernel standard deviation
+kde(d, { bandwidth: "scott" });               // Scott's rule (alternative data-driven selector)
+kde(d, { kernel: "epanechnikov", bandwidth: "silverman" }); // mix and match
+```
+
+**`kernel`** - `"gaussian" | "epanechnikov" | "triangular" | "cosine"`, default `"gaussian"`.
+
+**`bandwidth`** - the **kernel standard deviation**; a numeric value produces comparable smoothing
+across all kernels.
+  - `"silverman"` (default) and `"scott"` are data-driven selectors computed from
+the distribution's spread.
+  - `silvermanBandwidth(n, iqr, sd)` and `scottBandwidth(n, sd)` are also
+exported, if you want to compute a bandwidth directly.
+
+**`resolution`** - number of sample points across the domain (default `50`). More points produce a
+smoother curve for rendering; fewer are faster for quick checks.
 
 ## Empty & malformed input
 
@@ -191,7 +221,7 @@ off the same substrate.** If you only need one number from a flat array, this is
 
 Later phases slot into reserved option slots without breaking signatures:
 
-- **Density**: more kernels (Gaussian, triangular, cosine) and bandwidth selectors.
+- **Density**: weighted CDF confidence bands; adaptive bandwidth.
 - **Binning**: equal-frequency (quantile) bins, Sturges/Doane/Rice/Scott rules, log-scale bins.
 - **Inference & comparison**: weighted confidence intervals & t-tests, two-sample `compare`,
   weighted correlation.

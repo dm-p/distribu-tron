@@ -12,11 +12,13 @@ const d = distribution([
   { value: 7, weight: 1 },
 ]);
 
-function naive(x: number, h: number): number {
+// Epanechnikov reference under SD-scale bandwidth: native half-width a = h * sqrt(5).
+function naiveEpanechnikov(x: number, h: number): number {
+  const a = h * Math.sqrt(5);
   let acc = 0;
   for (let i = 0; i < d.size; i++) {
-    const u = (x - d.values[i]!) / h;
-    const k = Math.abs(u) <= 1 ? (0.75 * (1 - u * u)) / h : 0;
+    const u = (x - d.values[i]!) / a;
+    const k = Math.abs(u) <= 1 ? (0.75 * (1 - u * u)) / a : 0;
     acc += (d.weights[i]! / d.n) * k;
   }
   return acc;
@@ -26,10 +28,10 @@ describe("kde", () => {
   it("empty → []", () => {
     expect(kde(distribution([]), {})).toEqual([]);
   });
-  it("windowed == naive at every returned point", () => {
-    const pts = kde(d, { bandwidth: 1.5, clamp: false, resolution: 50 });
+  it("windowed epanechnikov == naive at every returned point", () => {
+    const pts = kde(d, { bandwidth: 1.5, kernel: "epanechnikov", clamp: false, resolution: 50 });
     expect(pts.length).toBeGreaterThan(0);
-    for (const p of pts) expect(p.density).toBeCloseTo(naive(p.x, 1.5), 6);
+    for (const p of pts) expect(p.density).toBeCloseTo(naiveEpanechnikov(p.x, 1.5), 6);
   });
   it("never negative", () => {
     for (const p of kde(d, { bandwidth: 1.5 })) expect(p.density).toBeGreaterThanOrEqual(0);
@@ -75,5 +77,67 @@ describe("kde", () => {
   });
   it("single-value distribution → [] (zero spread ⇒ zero bandwidth)", () => {
     expect(kde(distribution([{ value: 5, weight: 10 }]))).toEqual([]);
+  });
+
+  it("defaults to the gaussian kernel", () => {
+    const def = kde(d, { bandwidth: 1.5, samplePoints: [3.5] })[0]!.density;
+    const gauss = kde(d, { bandwidth: 1.5, kernel: "gaussian", samplePoints: [3.5] })[0]!.density;
+    const epan = kde(d, { bandwidth: 1.5, kernel: "epanechnikov", samplePoints: [3.5] })[0]!.density;
+    expect(def).toBeCloseTo(gauss, 12);
+    expect(def).not.toBeCloseTo(epan, 6);
+  });
+
+  it("gaussian default is smooth on a coarse-bandwidth dataset (few extrema)", () => {
+    const exam = distribution([
+      { value: 0, weight: 8 },
+      { value: 4, weight: 19 },
+      { value: 8, weight: 34 },
+      { value: 12, weight: 49 },
+      { value: 16, weight: 58 },
+      { value: 20, weight: 52 },
+      { value: 24, weight: 40 },
+      { value: 28, weight: 27 },
+      { value: 32, weight: 16 },
+      { value: 36, weight: 8 },
+      { value: 40, weight: 4 },
+    ]);
+    const pts = kde(exam, { bandwidth: 6 });
+    let extrema = 0;
+    let prev = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const s = Math.sign(pts[i]!.density - pts[i - 1]!.density);
+      if (s !== 0 && prev !== 0 && s !== prev) extrema++;
+      if (s !== 0) prev = s;
+    }
+    expect(extrema).toBeLessThanOrEqual(3);
+  });
+
+  it("the same bandwidth gives comparable spread across kernels (SD-normalized)", () => {
+    const spread = (kernel: "gaussian" | "epanechnikov" | "triangular" | "cosine") => {
+      const pts = kde(d, { bandwidth: 1.2, kernel, resolution: 200 });
+      const tot = pts.reduce((s, p) => s + p.density, 0);
+      const mean = pts.reduce((s, p) => s + p.x * p.density, 0) / tot;
+      const varr = pts.reduce((s, p) => s + (p.x - mean) ** 2 * p.density, 0) / tot;
+      return Math.sqrt(varr);
+    };
+    const g = spread("gaussian");
+    for (const k of ["epanechnikov", "triangular", "cosine"] as const) {
+      expect(spread(k)).toBeCloseTo(g, 1);
+    }
+  });
+
+  it("gaussian truncation at 4σ conserves ~all of the density mass", () => {
+    const pts = kde(d, { bandwidth: 1.0, kernel: "gaussian", resolution: 400 });
+    let area = 0;
+    for (let i = 1; i < pts.length; i++) {
+      area += ((pts[i]!.density + pts[i - 1]!.density) / 2) * (pts[i]!.x - pts[i - 1]!.x);
+    }
+    expect(area).toBeCloseTo(1, 2);
+  });
+
+  it("bandwidth: 'scott' produces a usable curve", () => {
+    const pts = kde(d, { bandwidth: "scott" });
+    expect(pts.length).toBeGreaterThan(0);
+    for (const p of pts) expect(p.density).toBeGreaterThanOrEqual(0);
   });
 });
