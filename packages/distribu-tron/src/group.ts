@@ -138,11 +138,11 @@ function rollupSubtotals(
     const active = new Set(activeIdx);
     const buckets = new Map<string, Bucket>();
     for (const leaf of leafBuckets.values()) {
-      // A subtotal merges pairs from several leaves (group-insertion order, not value order), so it must
-      // always sort/aggregate — never trust spec.sorted here.
       bucketPush(buckets, activeDims, rolledKey(dimensions, leaf.key, active, totalLabel), leaf.pairs);
     }
     for (const b of buckets.values()) {
+      // A subtotal merges pairs from several leaves (group-insertion order, not value order), so it must
+      // always sort/aggregate - never trust spec.sorted here.
       subtotals.push({ key: b.key, level: activeDims, depth: activeIdx.length, distribution: distribution(b.pairs) });
     }
   }
