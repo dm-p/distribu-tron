@@ -67,6 +67,30 @@ describe("grouped consumers", () => {
     const noOverall = summarize(gd, { includeOverall: false });
     expect(noOverall.some((r) => r.depth === 0)).toBe(false);
   });
+  it('rollup: "cube" margins surface through summarize; plot helpers stay leaves-only', () => {
+    const facet = [
+      { col: "A", row: "p", value: 1, weight: 10 },
+      { col: "A", row: "q", value: 5, weight: 10 },
+      { col: "B", row: "p", value: 2, weight: 10 },
+      { col: "B", row: "q", value: 9, weight: 10 },
+    ];
+    const gd = group(facet, {
+      by: ["col", "row"],
+      value: "value",
+      weight: "weight",
+      rollup: "cube",
+      totalLabel: "(All)",
+    });
+
+    // summarize defaults to including subtotals + overall, so the orthogonal (col-rolled) margins appear.
+    const s = summarize(gd);
+    const rowMargins = s.filter((r) => r.col === "(All)" && r.row !== "(All)" && r.depth === 1);
+    expect(rowMargins.length).toBe(2); // {(All),p} and {(All),q} — the column prefix ROLLUP omits
+
+    // Plot helpers still default to leaves only (no LevelSelect) — no margins double-counted in overlays.
+    const bins = groupedHistogram(gd);
+    expect(bins.every((b) => b.depth === 2)).toBe(true);
+  });
 });
 
 describe("groupedKde kernels & bandwidth", () => {

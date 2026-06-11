@@ -97,7 +97,7 @@ import {
 > magnitude first (e.g. `× 1000`), or use the scale-invariant `percentileRank` / `cdf`. (`histogram`, `kde`,
 > `ecdf`, and `mad` are already scale-invariant.)
 
-### Grouping with ROLLUP
+### Grouping with ROLLUP / CUBE
 
 `group()` turns a row set into one `Distribution` per key, with optional hierarchical subtotals
 and a grand total, like SQL `GROUP BY ... WITH ROLLUP`. The grouped plot helpers share one
@@ -132,6 +132,24 @@ groupedHistogram(gd, { includeOverall: true }); // add the grand-total series
 
 Each group is tagged with its `key`, plus `level`/`depth` so you can tell a `"(All)"` subtotal
 apart from a leaf whose value happens to equal the total label.
+
+`rollup` also accepts a string mode:
+
+| `rollup` | grouping-sets emitted |
+|---|---|
+| `false` (default) | leaves only |
+| `true` / `"prefix"` | hierarchical ROLLUP - leaves + right-to-left prefix subtotals + grand total |
+| `"margins"` | leaves + every single-dimension margin + grand total (linear in the number of dimensions) |
+| `"cube"` | every grouping-set - full OLAP `CUBE` (`2^N` over the distinct keys) |
+
+`"cube"` fills in the *orthogonal* margins a prefix `ROLLUP` omits: for a 2-D facet it populates
+both the `(All)` row **and** the `(All)` column, giving a complete cross-tab. `"margins"` and
+`"cube"` are identical for ≤ 2 dimensions; they diverge only at 3+, where `"cube"` adds the
+intermediate multi-dimension subtotals (every combination of two or more dimensions) and `"margins"`
+keeps just the per-dimension margins. Consumers
+select levels the same way regardless of mode - `summarize` includes subtotals + the grand total by
+default; `groupedHistogram` / `groupedKde` stay leaves-only unless you pass
+`{ includeSubtotals: true }` / `{ includeOverall: true }`.
 
 > **Reserved field names:** grouped helpers flatten the group key onto each output row, so don't
 > name a grouping dimension after an output field (`weight`, `x`, `density`, `n`, `min`, `max`,
@@ -223,7 +241,8 @@ Later phases slot into reserved option slots without breaking signatures:
 - **Binning**: equal-frequency (quantile) bins, Sturges/Doane/Rice/Scott rules, log-scale bins.
 - **Inference & comparison**: weighted confidence intervals & t-tests, two-sample `compare`,
   weighted correlation.
-- **Grouping extras**: `CUBE` / arbitrary grouping-sets beyond prefix `ROLLUP`.
+- **Grouping extras**: arbitrary named `groupingSets` (caller-specified subsets) beyond the built-in
+  `ROLLUP` / `"margins"` / `CUBE` modes.
 - **Adapters**: `@distribu-tron/vega` and friends: plot-ready arrays → chart specs.
 
 ## Notice
