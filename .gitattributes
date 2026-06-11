@@ -1,0 +1,4 @@
+# Normalize line endings: store text as LF in the repo and check out LF in every
+# working tree (text=auto lets git auto-detect and leave binary files untouched).
+# Keeps biome/CI from tripping on CRLF that Windows editors introduce locally.
+* text=auto eol=lf
